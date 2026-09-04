@@ -2,10 +2,15 @@
 @inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
 <PageTitle>Home</PageTitle>
 
-<div class="template-container">
-    <h1>Welcome to your new Hybrid App! auauauua</h1>
-    <p>This is the empty MainProject template ready to be filled with your systems.</p>
+<div class="home-screen">
+    <GradientCard CustomClass="home-hero">
+        <span class="home-hero-emoji">🍵✨</span>
+        <h1 class="home-hero-title">Welcome to @AppConstants.AppNameHumanReadable</h1>
+        <p class="home-hero-subtitle">So glad you're here — your feed will start filling up soon.</p>
+    </GradientCard>
 </div>
+
+<HomeCss />
 
 @code {
 
