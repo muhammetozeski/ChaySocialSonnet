@@ -1,5 +1,6 @@
 @attribute [Route("/profile")]
 @inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+@inject IIdentityKeyStore KeyStore
 <PageTitle>Profile</PageTitle>
 
 <div class="profile-screen">
@@ -21,8 +22,9 @@
         ? AppConstants.GuestDisplayName
         : UserProfileService.LoggedUserProfileData!.DisplayName;
 
-    void HandleSignOut()
+    async Task HandleSignOut()
     {
+        await KeyStore.ClearAsync();
         AuthService.SignOut();
         NavManager.NavigateTo("/login");
     }

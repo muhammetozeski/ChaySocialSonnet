@@ -1,4 +1,5 @@
 using ChaySocialSonnet.MainProject.Backend;
+using ChaySocialSonnet.MainProject.Services.Identity;
 using ChaySocialSonnet.MainProject.UI.Architecture;
 using ChaySocialSonnet.Web.Backend;
 using ChaySocialSonnet.Web.Components;
@@ -12,8 +13,11 @@ namespace ChaySocialSonnet
         {
             // Every page can touch a private key, so the whole app must always run client-side, even on
             // the first request — Interactive Server/Auto would execute component code on this server
-            // process at least once. See HostRenderMode's own summary for the full reasoning.
-            HostRenderMode.Interactive = RenderMode.InteractiveWebAssembly;
+            // process at least once. See HostRenderMode's own summary for the full reasoning. Prerender
+            // is off too: pages like Splash/Login decide what to show based on the real on-device saved
+            // identity, which only WebAssembly can read — a prerendered pass would only ever see
+            // NullIdentityKeyStore's "nothing saved" answer and could redirect on that stale basis.
+            HostRenderMode.Interactive = new InteractiveWebAssemblyRenderMode(prerender: false);
 
             var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +32,10 @@ namespace ChaySocialSonnet
             builder.Services.AddSingleton<IIdentityRegistry, LocalIdentityRegistry>();
             builder.Services.AddSingleton<IPostStore, LocalPostStore>();
             builder.Services.AddSingleton<IMessageRelay, LocalMessageRelay>();
+
+            // The server never touches on-device storage — see HostRenderMode.Interactive above for why
+            // this component tree does not even statically prerender.
+            builder.Services.AddSingleton<IIdentityKeyStore, NullIdentityKeyStore>();
 
             var app = builder.Build();
 

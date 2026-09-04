@@ -1,5 +1,6 @@
 @attribute [Route("/login")]
 @inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+@inject IIdentityKeyStore KeyStore
 <PageTitle>@AppConstants.LoginMenuTitle</PageTitle>
 
 <div class="login-screen">
@@ -49,8 +50,9 @@
         _isCreating = false;
     }
 
-    void HandleContinue()
+    async Task HandleContinue()
     {
+        await KeyStore.SaveAsync(_identity!);
         AuthService.SignIn(_identity!);
         NavManager.NavigateTo("/home");
     }

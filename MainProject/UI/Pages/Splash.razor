@@ -1,5 +1,6 @@
 @attribute [Route("/")]
 @inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+@inject IIdentityKeyStore KeyStore
 <PageTitle>@AppConstants.AppNameHumanReadable</PageTitle>
 
 <div class="splash-screen">
@@ -14,6 +15,15 @@
     protected override async Task OnInitializedAsync()
     {
         await Task.Delay(UiConstants.Delays.SplashMinimumMs);
+
+        ChayIdentity? savedIdentity = await KeyStore.LoadAsync();
+        if (savedIdentity is not null)
+        {
+            AuthService.SignIn(savedIdentity);
+            NavManager.NavigateTo("/home");
+            return;
+        }
+
         NavManager.NavigateTo("/login");
     }
 }

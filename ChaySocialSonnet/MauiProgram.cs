@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using ChaySocialSonnet.MainProject.Services.Identity;
+using ChaySocialSonnet.Services;
+using Microsoft.Extensions.Logging;
 
 namespace ChaySocialSonnet
 {
@@ -15,6 +17,7 @@ namespace ChaySocialSonnet
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddSingleton<IIdentityKeyStore, MauiIdentityKeyStore>();
 
             // ChaySocialSonnet.MainProject.UI.Architecture.HostRenderMode.Interactive is intentionally
             // left null here: BlazorWebView always runs interactively in-process and throws if a
