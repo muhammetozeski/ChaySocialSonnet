@@ -10,10 +10,27 @@ namespace ChaySocialSonnet.MainProject.Backend
     /// <summary> Minimal public info about a registered identity, used for search results and viewing another user's profile. </summary>
     public sealed record IdentitySummary(string PublicId, string DisplayName);
 
+    /// <summary> Outcome of <see cref="IIdentityRegistry.RegisterAsync"/> — the two account-takeover checks every implementation must enforce. </summary>
+    public enum RegisterIdentityResult
+    {
+        Registered,
+
+        /// <summary> <c>publicId</c> is not the hash of the given signing public key. </summary>
+        PublicIdMismatch,
+
+        /// <summary> <c>publicId</c> is already registered under a different signing public key. </summary>
+        AlreadyRegisteredWithDifferentKey
+    }
+
     public interface IIdentityRegistry
     {
-        /// <summary> Registers a freshly generated identity's public keys and chosen display name. </summary>
-        Task RegisterAsync(string publicId, byte[] signingPublicKey, byte[] encryptionPublicKey, string displayName);
+        /// <summary>
+        /// Registers a freshly generated identity's public keys and chosen display name. Every
+        /// implementation must reject a <c>publicId</c> that doesn't match the signing public key's hash
+        /// and must reject re-registering an existing <c>publicId</c> under a different signing key — these
+        /// are the system's only account-takeover protections, so they live here rather than in the endpoint.
+        /// </summary>
+        Task<RegisterIdentityResult> RegisterAsync(string publicId, byte[] signingPublicKey, byte[] encryptionPublicKey, string displayName);
 
         /// <summary> Looks up the display name and public id for a registered identity, or null if unregistered. </summary>
         Task<IdentitySummary?> GetSummaryAsync(string publicId);

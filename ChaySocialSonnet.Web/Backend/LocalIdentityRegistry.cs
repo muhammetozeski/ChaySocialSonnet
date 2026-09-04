@@ -21,10 +21,23 @@ namespace ChaySocialSonnet.Web.Backend
         readonly ConcurrentDictionary<string, RegisteredIdentity> identities = new();
         readonly ConcurrentDictionary<string, PendingChallenge> pendingChallenges = new();
 
-        public Task RegisterAsync(string publicId, byte[] signingPublicKey, byte[] encryptionPublicKey, string displayName)
+        public Task<RegisterIdentityResult> RegisterAsync(string publicId, byte[] signingPublicKey, byte[] encryptionPublicKey, string displayName)
         {
+            if (IdentityService.DerivePublicId(signingPublicKey) != publicId)
+            {
+                return Task.FromResult(RegisterIdentityResult.PublicIdMismatch);
+            }
+
+            // Unreachable without a SHA-256 collision: the mismatch check above already guarantees
+            // signingPublicKey hashes to publicId, so a genuinely different key can never reach here under
+            // the same publicId. Kept as defense-in-depth in case a future change loosens that guarantee.
+            if (identities.TryGetValue(publicId, out RegisteredIdentity? existing) && !existing.SigningPublicKey.SequenceEqual(signingPublicKey))
+            {
+                return Task.FromResult(RegisterIdentityResult.AlreadyRegisteredWithDifferentKey);
+            }
+
             identities[publicId] = new RegisteredIdentity(signingPublicKey, encryptionPublicKey, displayName);
-            return Task.CompletedTask;
+            return Task.FromResult(RegisterIdentityResult.Registered);
         }
 
         public Task<byte[]?> GetSigningPublicKeyAsync(string publicId) =>

@@ -1,5 +1,4 @@
 using ChaySocialSonnet.MainProject.Backend;
-using ChaySocialSonnet.MainProject.Services.Identity;
 
 namespace ChaySocialSonnet.Web.Backend
 {
@@ -19,19 +18,14 @@ namespace ChaySocialSonnet.Web.Backend
                     return Results.BadRequest("encryptionPublicKeyBase64 is not valid Base64.");
                 }
 
-                if (IdentityService.DerivePublicId(signingPublicKey) != request.PublicId)
+                RegisterIdentityResult result = await registry.RegisterAsync(request.PublicId, signingPublicKey, encryptionPublicKey, request.DisplayName);
+                return result switch
                 {
-                    return Results.BadRequest("publicId does not match the given signing public key.");
-                }
-
-                byte[]? existingSigningPublicKey = await registry.GetSigningPublicKeyAsync(request.PublicId);
-                if (existingSigningPublicKey is not null && !existingSigningPublicKey.SequenceEqual(signingPublicKey))
-                {
-                    return Results.Conflict("This identity is already registered with a different key.");
-                }
-
-                await registry.RegisterAsync(request.PublicId, signingPublicKey, encryptionPublicKey, request.DisplayName);
-                return Results.Ok();
+                    RegisterIdentityResult.Registered => Results.Ok(),
+                    RegisterIdentityResult.PublicIdMismatch => Results.BadRequest("publicId does not match the given signing public key."),
+                    RegisterIdentityResult.AlreadyRegisteredWithDifferentKey => Results.Conflict("This identity is already registered with a different key."),
+                    _ => Results.Problem("Unknown registration result.")
+                };
             });
 
             app.MapPost("/api/identity/challenge", async (IssueChallengeRequest request, IIdentityRegistry registry) =>

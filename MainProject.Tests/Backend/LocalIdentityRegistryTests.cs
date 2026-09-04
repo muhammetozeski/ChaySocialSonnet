@@ -1,3 +1,4 @@
+using ChaySocialSonnet.MainProject.Backend;
 using ChaySocialSonnet.MainProject.Services.Identity;
 using ChaySocialSonnet.Web.Backend;
 
@@ -70,6 +71,42 @@ namespace ChaySocialSonnet.MainProject.Tests.Backend
             var storedKey = await registry.GetSigningPublicKeyAsync(identity.PublicId);
 
             Assert.Equal(identity.SigningPublicKey, storedKey);
+        }
+
+        [Fact]
+        public async Task RegisterAsync_WithMatchingSigningKey_ReturnsRegistered()
+        {
+            var registry = new LocalIdentityRegistry();
+            var identity = IdentityService.GenerateIdentity();
+
+            var result = await registry.RegisterAsync(identity.PublicId, identity.SigningPublicKey, identity.EncryptionPublicKey, "Test User");
+
+            Assert.Equal(RegisterIdentityResult.Registered, result);
+        }
+
+        [Fact]
+        public async Task RegisterAsync_WherePublicIdDoesNotMatchSigningKey_ReturnsPublicIdMismatch()
+        {
+            var registry = new LocalIdentityRegistry();
+            var identity = IdentityService.GenerateIdentity();
+            var somebodyElse = IdentityService.GenerateIdentity();
+
+            var result = await registry.RegisterAsync(somebodyElse.PublicId, identity.SigningPublicKey, identity.EncryptionPublicKey, "Test User");
+
+            Assert.Equal(RegisterIdentityResult.PublicIdMismatch, result);
+        }
+
+        [Fact]
+        public async Task RegisterAsync_CalledTwiceWithTheSameSigningKey_ReturnsRegisteredBothTimes()
+        {
+            var registry = new LocalIdentityRegistry();
+            var identity = IdentityService.GenerateIdentity();
+
+            var first = await registry.RegisterAsync(identity.PublicId, identity.SigningPublicKey, identity.EncryptionPublicKey, "Test User");
+            var second = await registry.RegisterAsync(identity.PublicId, identity.SigningPublicKey, identity.EncryptionPublicKey, "Test User (renamed)");
+
+            Assert.Equal(RegisterIdentityResult.Registered, first);
+            Assert.Equal(RegisterIdentityResult.Registered, second);
         }
     }
 }
