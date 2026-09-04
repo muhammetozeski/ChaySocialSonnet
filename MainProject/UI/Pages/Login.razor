@@ -11,8 +11,8 @@
 
         @if (_identity is null)
         {
-            <PrimaryButton IsFullWidth="true" Disabled="@_isCreating" OnClick="HandleCreateAccount">
-                @if (_isCreating)
+            <PrimaryButton IsFullWidth="true" Disabled="@_creating.IsBusy" OnClick="HandleCreateAccount">
+                @if (_creating.IsBusy)
                 {
                     <CoreSpinner SizePx="@AppMeasures.Size.Px20" Color="@AppColors.TextOnAccent" />
                 }
@@ -28,12 +28,12 @@
                 <p class="login-identity-label">Your identity</p>
                 <p class="login-identity-value">@_identity.PublicId</p>
             </div>
-            @if (_errorMessage is not null)
+            @if (_signingIn.ErrorMessage is not null)
             {
-                <p class="login-error">@_errorMessage</p>
+                <p class="login-error">@_signingIn.ErrorMessage</p>
             }
-            <PrimaryButton IsFullWidth="true" Disabled="@_isSigningIn" OnClick="HandleContinue">
-                @if (_isSigningIn)
+            <PrimaryButton IsFullWidth="true" Disabled="@_signingIn.IsBusy" OnClick="HandleContinue">
+                @if (_signingIn.IsBusy)
                 {
                     <CoreSpinner SizePx="@AppMeasures.Size.Px20" Color="@AppColors.TextOnAccent" />
                 }
@@ -49,39 +49,42 @@
 <LoginCss />
 
 @code {
+    AsyncOperationState _creating = null!;
+    AsyncOperationState _signingIn = null!;
     ChayIdentity? _identity;
-    bool _isCreating;
-    bool _isSigningIn;
-    string? _errorMessage;
+
+    protected override void OnInitialized()
+    {
+        _creating = new AsyncOperationState(StateHasChanged);
+        _signingIn = new AsyncOperationState(StateHasChanged);
+        base.OnInitialized();
+    }
 
     /// <summary> Generates a brand-new ML-DSA/ML-KEM identity entirely on this device; the private keys never leave it. </summary>
     async Task HandleCreateAccount()
     {
-        _isCreating = true;
-        StateHasChanged();
-        await Task.Yield();
-        _identity = IdentityService.GenerateIdentity();
-        _isCreating = false;
+        await _creating.RunAsync(async () =>
+        {
+            await Task.Yield();
+            _identity = IdentityService.GenerateIdentity();
+        });
     }
 
     /// <summary> Registers the identity's public keys with the server, then proves ownership via challenge-response before signing in — the private key is never sent. </summary>
     async Task HandleContinue()
     {
-        _isSigningIn = true;
-        _errorMessage = null;
-        StateHasChanged();
-
-        await ApiClient.RegisterAsync(_identity!, AppConstants.GuestDisplayName);
-        bool verified = await ApiClient.SignInAsync(_identity!);
-        if (!verified)
+        await _signingIn.RunAsync(async () =>
         {
-            _errorMessage = "Could not verify your identity with the server. Please try again.";
-            _isSigningIn = false;
-            return;
-        }
+            await ApiClient.RegisterAsync(_identity!, AppConstants.GuestDisplayName);
+            bool verified = await ApiClient.SignInAsync(_identity!);
+            if (!verified)
+            {
+                throw new InvalidOperationException("Could not verify your identity with the server. Please try again.");
+            }
 
-        await KeyStore.SaveAsync(_identity!);
-        AuthService.SignIn(_identity!);
-        NavManager.NavigateTo("/home");
+            await KeyStore.SaveAsync(_identity!);
+            AuthService.SignIn(_identity!);
+            NavManager.NavigateTo("/home");
+        });
     }
 }
