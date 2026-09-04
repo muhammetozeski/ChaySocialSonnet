@@ -1,3 +1,5 @@
+using ChaySocialSonnet.MainProject.Backend;
+using ChaySocialSonnet.Web.Backend;
 using ChaySocialSonnet.Web.Components;
 
 namespace ChaySocialSonnet
@@ -12,6 +14,13 @@ namespace ChaySocialSonnet
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents()
                 .AddInteractiveWebAssemblyComponents();
+
+            // Local, in-memory backend for now — the developer's own PC is "the server". Each of these
+            // is registered behind its MainProject interface, so swapping in a Firebase-backed
+            // implementation later is a one-line change here, not a change to any caller.
+            builder.Services.AddSingleton<IIdentityRegistry, LocalIdentityRegistry>();
+            builder.Services.AddSingleton<IPostStore, LocalPostStore>();
+            builder.Services.AddSingleton<IMessageRelay, LocalMessageRelay>();
 
             var app = builder.Build();
 

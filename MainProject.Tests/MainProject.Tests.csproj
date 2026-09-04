@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MainProject\MainProject.csproj" />
+    <ProjectReference Include="..\ChaySocialSonnet.Web\ChaySocialSonnet.Web.csproj" />
   </ItemGroup>
 
 </Project>
