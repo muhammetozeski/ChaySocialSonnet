@@ -19,6 +19,13 @@ namespace ChaySocialSonnet
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddSingleton<IIdentityKeyStore, MauiIdentityKeyStore>();
 
+            // No server to talk to yet from the native app (ChaySocialSonnet.Web is only reachable over
+            // the network once mobile builds actually ship) — this HttpClient has no BaseAddress until
+            // that's wired up. Registered anyway so shared pages that inject IdentityApiClient still
+            // resolve correctly here.
+            builder.Services.AddSingleton<HttpClient>();
+            builder.Services.AddSingleton<IdentityApiClient>();
+
             // ChaySocialSonnet.MainProject.UI.Architecture.HostRenderMode.Interactive is intentionally
             // left null here: BlazorWebView always runs interactively in-process and throws if a
             // shared page specifies an explicit render mode.

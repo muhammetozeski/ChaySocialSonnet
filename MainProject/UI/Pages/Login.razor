@@ -1,6 +1,7 @@
 @attribute [Route("/login")]
 @inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
 @inject IIdentityKeyStore KeyStore
+@inject IdentityApiClient ApiClient
 <PageTitle>@AppConstants.LoginMenuTitle</PageTitle>
 
 <div class="login-screen">
@@ -27,8 +28,19 @@
                 <p class="login-identity-label">Your identity</p>
                 <p class="login-identity-value">@_identity.PublicId</p>
             </div>
-            <PrimaryButton IsFullWidth="true" OnClick="HandleContinue">
-                <span>Continue</span>
+            @if (_errorMessage is not null)
+            {
+                <p class="login-error">@_errorMessage</p>
+            }
+            <PrimaryButton IsFullWidth="true" Disabled="@_isSigningIn" OnClick="HandleContinue">
+                @if (_isSigningIn)
+                {
+                    <CoreSpinner SizePx="@AppMeasures.Size.Px20" Color="@AppColors.TextOnAccent" />
+                }
+                else
+                {
+                    <span>Continue</span>
+                }
             </PrimaryButton>
         }
     </GlassCard>
@@ -39,6 +51,8 @@
 @code {
     ChayIdentity? _identity;
     bool _isCreating;
+    bool _isSigningIn;
+    string? _errorMessage;
 
     /// <summary> Generates a brand-new ML-DSA/ML-KEM identity entirely on this device; the private keys never leave it. </summary>
     async Task HandleCreateAccount()
@@ -50,8 +64,22 @@
         _isCreating = false;
     }
 
+    /// <summary> Registers the identity's public keys with the server, then proves ownership via challenge-response before signing in — the private key is never sent. </summary>
     async Task HandleContinue()
     {
+        _isSigningIn = true;
+        _errorMessage = null;
+        StateHasChanged();
+
+        await ApiClient.RegisterAsync(_identity!, AppConstants.GuestDisplayName);
+        bool verified = await ApiClient.SignInAsync(_identity!);
+        if (!verified)
+        {
+            _errorMessage = "Could not verify your identity with the server. Please try again.";
+            _isSigningIn = false;
+            return;
+        }
+
         await KeyStore.SaveAsync(_identity!);
         AuthService.SignIn(_identity!);
         NavManager.NavigateTo("/home");

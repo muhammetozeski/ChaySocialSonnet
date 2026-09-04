@@ -56,6 +56,8 @@ namespace ChaySocialSonnet
 
             app.UseAntiforgery();
 
+            app.MapIdentityEndpoints();
+
             app.MapStaticAssets();
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode()
