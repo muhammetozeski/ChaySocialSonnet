@@ -3,5 +3,6 @@
   <Project Path="ChaySocialSonnet.Web/ChaySocialSonnet.Web.csproj" />
   <Project Path="ChaySocialSonnet/ChaySocialSonnet.csproj" />
   <Project Path="Generators/Generators.csproj" />
+  <Project Path="MainProject.Tests/MainProject.Tests.csproj" />
   <Project Path="MainProject/MainProject.csproj" />
 </Solution>
