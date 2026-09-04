@@ -1,12 +1,13 @@
 using ChaySocialSonnet.MainProject.DataModels;
+using ChaySocialSonnet.MainProject.Events;
 
 namespace ChaySocialSonnet.MainProject.Services
 {
     public static class UserProfileService
     {
         public static UserProfileData? LoggedUserProfileData { get; set; }
-        public static event Action? OnProfileLoaded;
-        public static event Action? OnProfileUpdated;
+        public static readonly AppEvent OnProfileLoaded = new();
+        public static readonly AppEvent OnProfileUpdated = new();
 
         public static async Task<UserProfileData?> GetProfileAsync(string userId)
         {
@@ -20,14 +21,14 @@ namespace ChaySocialSonnet.MainProject.Services
             // Add your generic update profile logic here
             LoggedUserProfileData = profileData;
             await Task.CompletedTask;
-            OnProfileUpdated?.Invoke();
+            OnProfileUpdated.Raise();
         }
 
         public static async Task LoadProfileAsync()
         {
             // Add your load logic here
             await Task.CompletedTask;
-            OnProfileLoaded?.Invoke();
+            OnProfileLoaded.Raise();
         }
     }
 }

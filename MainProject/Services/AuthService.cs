@@ -1,10 +1,11 @@
+using ChaySocialSonnet.MainProject.Events;
 using ChaySocialSonnet.MainProject.Services.Identity;
 
 namespace ChaySocialSonnet.MainProject.Services
 {
     public static class AuthService
     {
-        public static event Action? OnAuthStateChanged;
+        public static readonly AppEvent OnAuthStateChanged = new();
         public static bool IsLoggedIn { get; private set; }
 
         /// <summary> The signed-in identity for this app session (in-memory only — lost on reload until a persistent on-device key store is added). Null while signed out. </summary>
@@ -20,7 +21,7 @@ namespace ChaySocialSonnet.MainProject.Services
         {
             CurrentIdentity = identity;
             IsLoggedIn = true;
-            OnAuthStateChanged?.Invoke();
+            OnAuthStateChanged.Raise();
         }
 
         /// <summary> Clears the signed-in identity and raises <see cref="OnAuthStateChanged"/>. </summary>
@@ -28,7 +29,7 @@ namespace ChaySocialSonnet.MainProject.Services
         {
             CurrentIdentity = null;
             IsLoggedIn = false;
-            OnAuthStateChanged?.Invoke();
+            OnAuthStateChanged.Raise();
         }
     }
 }
