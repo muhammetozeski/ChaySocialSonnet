@@ -8,9 +8,9 @@ internal static class NavigationData
 {
     static ITuple Pages => (
         Home: "🏠",
-        Logina: "🔑",
-        Profilee: "👤",
-        Tab1: "1️⃣",
-        Settings: "/images/settings.png"
+        Search: "🔍",
+        Messages: "💬",
+        Notifications: "🔔",
+        Profile: "👤"
     );
 }
