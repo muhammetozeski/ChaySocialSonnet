@@ -21,6 +21,34 @@
                     <span>Create my account</span>
                 }
             </PrimaryButton>
+
+            @if (!_showRestorePrompt)
+            {
+                <SecondaryButton IsFullWidth="true" OnClick="() => _showRestorePrompt = true">
+                    <span>Restore from backup</span>
+                </SecondaryButton>
+            }
+            else
+            {
+                <div class="login-restore-prompt">
+                    <InputFile OnChange="HandleBackupFileSelected" />
+                    <CoreInput Type="password" Placeholder="Backup passphrase" @bind-Value="_restorePassphrase" />
+                    @if (_restoring.ErrorMessage is not null)
+                    {
+                        <p class="login-error">@_restoring.ErrorMessage</p>
+                    }
+                    <PrimaryButton IsFullWidth="true" Disabled="@(_restoring.IsBusy || _restoreFileBytes is null || string.IsNullOrWhiteSpace(_restorePassphrase))" OnClick="HandleRestore">
+                        @if (_restoring.IsBusy)
+                        {
+                            <CoreSpinner SizePx="@AppMeasures.Size.Px20" Color="@AppColors.TextOnAccent" />
+                        }
+                        else
+                        {
+                            <span>Restore</span>
+                        }
+                    </PrimaryButton>
+                </div>
+            }
         }
         else
         {
@@ -49,14 +77,22 @@
 <LoginCss />
 
 @code {
+    /// <summary> Backup blobs are salt(16) + nonce(12) + the JSON identity (mostly base64-encoded ML-DSA/ML-KEM key material, ~13KB) + a 16-byte GCM tag. This is generous headroom, just to reject an obviously-wrong file early. </summary>
+    const long MaxBackupFileSizeBytes = 65_536;
+
     AsyncOperationState _creating = null!;
     AsyncOperationState _signingIn = null!;
+    AsyncOperationState _restoring = null!;
     ChayIdentity? _identity;
+    bool _showRestorePrompt;
+    byte[]? _restoreFileBytes;
+    string _restorePassphrase = string.Empty;
 
     protected override void OnInitialized()
     {
         _creating = new AsyncOperationState(StateHasChanged);
         _signingIn = new AsyncOperationState(StateHasChanged);
+        _restoring = new AsyncOperationState(StateHasChanged);
         base.OnInitialized();
     }
 
@@ -84,6 +120,47 @@
 
             await KeyStore.SaveAsync(_identity!);
             AuthService.SignIn(_identity!, sessionToken);
+            NavManager.NavigateTo("/home");
+        });
+    }
+
+    async Task HandleBackupFileSelected(InputFileChangeEventArgs args)
+    {
+        using Stream stream = args.File.OpenReadStream(MaxBackupFileSizeBytes);
+        using var memory = new MemoryStream();
+        await stream.CopyToAsync(memory);
+        _restoreFileBytes = memory.ToArray();
+    }
+
+    /// <summary> Decrypts the uploaded backup entirely on-device, then runs the same sign-in proof HandleContinue does — registration is skipped since a restored identity is already registered. </summary>
+    async Task HandleRestore()
+    {
+        if (_restoreFileBytes is null || string.IsNullOrWhiteSpace(_restorePassphrase))
+        {
+            return;
+        }
+
+        await _restoring.RunAsync(async () =>
+        {
+            ChayIdentity identity;
+            try
+            {
+                identity = IdentityBackupService.DecryptBackup(_restoreFileBytes, _restorePassphrase);
+            }
+            catch (Exception exception)
+            {
+                Log(exception, LogLevel.Warning);
+                throw new InvalidOperationException("Could not restore this backup — check the file and passphrase.");
+            }
+
+            string? sessionToken = await ApiClient.SignInAsync(identity);
+            if (sessionToken is null)
+            {
+                throw new InvalidOperationException("Could not verify this identity with the server. Please try again.");
+            }
+
+            await KeyStore.SaveAsync(identity);
+            AuthService.SignIn(identity, sessionToken);
             NavManager.NavigateTo("/home");
         });
     }

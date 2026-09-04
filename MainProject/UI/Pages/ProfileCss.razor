@@ -70,4 +70,17 @@
         word-break: break-all;
         text-align: left;
     }
+
+    .profile-backup-prompt {
+        display: flex;
+        flex-direction: column;
+        gap: @(AppMeasures.Space.Small)px;
+        width: @(AppMeasures.Percent.Full)%;
+    }
+
+    .profile-backup-hint {
+        margin: 0;
+        font-size: @(AppMeasures.Font.XSmall)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+    }
 </style>
