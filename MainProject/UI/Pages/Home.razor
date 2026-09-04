@@ -1,6 +1,7 @@
 @attribute [Route("/home")]
 @inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
 @inject PostApiClient PostApi
+@inject FollowApiClient FollowApi
 <PageTitle>Home</PageTitle>
 
 <div class="home-screen">
@@ -35,19 +36,27 @@
             }
         </Intro>
         <Feed>
-            @if (_posts is null)
+            @if (ViewerPublicId is not null)
+            {
+                <div class="home-feed-tabs">
+                    <button class="home-feed-tab @(_activeTab == FeedTab.ForYou ? "home-feed-tab--active" : "")" @onclick="() => HandleSelectTab(FeedTab.ForYou)">For You</button>
+                    <button class="home-feed-tab @(_activeTab == FeedTab.Following ? "home-feed-tab--active" : "")" @onclick="() => HandleSelectTab(FeedTab.Following)">Following</button>
+                </div>
+            }
+
+            @if (CurrentPosts is null)
             {
                 <div class="home-feed-loading">
                     <CoreSpinner />
                 </div>
             }
-            else if (_posts.Count == 0)
+            else if (CurrentPosts.Count == 0)
             {
-                <p class="home-empty-feed">No posts yet — be the first to share something!</p>
+                <p class="home-empty-feed">@EmptyFeedMessage</p>
             }
             else
             {
-                @foreach (PostSummary post in _posts)
+                @foreach (PostSummary post in CurrentPosts)
                 {
                     <PostCard Post="post" ViewerPublicId="@ViewerPublicId" OnDeleted="HandlePostDeleted" />
                 }
@@ -59,18 +68,55 @@
 <HomeCss />
 
 @code {
+    enum FeedTab { ForYou, Following }
+
     const int RecentPostsCount = 20;
 
     IReadOnlyList<PostSummary>? _posts;
+    IReadOnlyList<PostSummary>? _followingPosts;
+    FeedTab _activeTab = FeedTab.ForYou;
     AsyncOperationState _posting = null!;
     string _draftText = string.Empty;
 
     string? ViewerPublicId => AuthService.CurrentIdentity?.PublicId;
 
+    IReadOnlyList<PostSummary>? CurrentPosts => _activeTab == FeedTab.ForYou ? _posts : _followingPosts;
+
+    string EmptyFeedMessage => _activeTab == FeedTab.ForYou
+        ? "No posts yet — be the first to share something!"
+        : "Nobody you follow has posted yet.";
+
     protected override async Task OnInitializedAsync()
     {
         _posting = new AsyncOperationState(StateHasChanged);
         _posts = await PostApi.GetRecentPostsAsync(RecentPostsCount, ViewerPublicId);
+    }
+
+    async Task HandleSelectTab(FeedTab tab)
+    {
+        _activeTab = tab;
+        if (tab == FeedTab.Following && _followingPosts is null)
+        {
+            await LoadFollowingFeedAsync();
+        }
+    }
+
+    /// <summary> Merges each followed identity's own recent posts into one feed, newest first. Fine at this scale — revisit with a dedicated server-side query if the following list or post volume grows large. </summary>
+    async Task LoadFollowingFeedAsync()
+    {
+        if (ViewerPublicId is null)
+        {
+            return;
+        }
+
+        IReadOnlyList<string> followingIds = await FollowApi.GetFollowingIdsAsync(ViewerPublicId);
+        var merged = new List<PostSummary>();
+        foreach (string id in followingIds)
+        {
+            merged.AddRange(await PostApi.GetPostsByAuthorAsync(id, RecentPostsCount, ViewerPublicId));
+        }
+        merged.Sort((a, b) => b.CreatedAt.CompareTo(a.CreatedAt));
+        _followingPosts = merged.Count > RecentPostsCount ? merged.Take(RecentPostsCount).ToList() : merged;
     }
 
     async Task HandlePost()
@@ -91,6 +137,7 @@
     void HandlePostDeleted(string postId)
     {
         _posts = _posts?.Where(post => post.Id != postId).ToList();
+        _followingPosts = _followingPosts?.Where(post => post.Id != postId).ToList();
         StateHasChanged();
     }
 }

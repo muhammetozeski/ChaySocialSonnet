@@ -29,6 +29,30 @@
         line-height: @(AppMeasures.LineHeight.Relaxed);
     }
 
+    .home-feed-tabs {
+        display: flex;
+        flex-direction: row;
+        gap: @(AppMeasures.Space.Small)px;
+        margin-bottom: @(AppMeasures.Space.Small)px;
+    }
+
+    .home-feed-tab {
+        flex: 1;
+        border: none;
+        cursor: pointer;
+        padding: @(AppMeasures.Space.Small)px;
+        border-radius: @(AppMeasures.Radius.Medium)px;
+        font-size: @(AppMeasures.Font.Small)px;
+        font-weight: @(AppMeasures.Weight.Semibold);
+        background: @(AppColors.SurfaceSubtle.ToRgbaHex(true));
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+    }
+
+    .home-feed-tab--active {
+        background: @(AppColors.Primary.ToRgbaHex(true));
+        color: @(AppColors.TextOnAccent.ToRgbaHex(true));
+    }
+
     .home-feed-loading {
         display: flex;
         justify-content: center;

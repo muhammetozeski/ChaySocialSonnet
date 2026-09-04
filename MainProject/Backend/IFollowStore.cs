@@ -14,5 +14,8 @@ namespace ChaySocialSonnet.MainProject.Backend
         Task<int> GetFollowerCountAsync(string publicId);
 
         Task<int> GetFollowingCountAsync(string publicId);
+
+        /// <summary> Public ids of everyone <paramref name="publicId"/> follows, for building a following-only feed. </summary>
+        Task<IReadOnlyList<string>> GetFollowingIdsAsync(string publicId);
     }
 }

@@ -26,6 +26,9 @@ namespace ChaySocialSonnet.Web.Backend
 
             app.MapGet("/api/follow/{targetPublicId}/status", async (string targetPublicId, string? viewerPublicId, IFollowStore follows) =>
                 Results.Ok(await BuildStatusAsync(targetPublicId, viewerPublicId, follows)));
+
+            app.MapGet("/api/follow/{publicId}/following-ids", async (string publicId, IFollowStore follows) =>
+                Results.Ok(await follows.GetFollowingIdsAsync(publicId)));
         }
 
         static async Task<FollowStatusResponse> BuildStatusAsync(string targetPublicId, string? viewerPublicId, IFollowStore follows)

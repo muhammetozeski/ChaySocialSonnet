@@ -37,5 +37,13 @@ namespace ChaySocialSonnet.Web.Backend
 
         public Task<int> GetFollowingCountAsync(string publicId) =>
             Task.FromResult(followingByFollower.TryGetValue(publicId, out ConcurrentDictionary<string, byte>? following) ? following.Count : 0);
+
+        public Task<IReadOnlyList<string>> GetFollowingIdsAsync(string publicId)
+        {
+            IReadOnlyList<string> ids = followingByFollower.TryGetValue(publicId, out ConcurrentDictionary<string, byte>? following)
+                ? following.Keys.ToList()
+                : [];
+            return Task.FromResult(ids);
+        }
     }
 }

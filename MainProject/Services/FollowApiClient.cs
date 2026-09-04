@@ -29,5 +29,12 @@ namespace ChaySocialSonnet.MainProject.Services
             string viewerQuery = viewerPublicId is null ? "" : $"?viewerPublicId={Uri.EscapeDataString(viewerPublicId)}";
             return (await httpClient.GetFromJsonAsync<FollowStatusResponse>($"/api/follow/{Uri.EscapeDataString(targetPublicId)}/status{viewerQuery}"))!;
         }
+
+        /// <summary> Public ids of everyone <paramref name="publicId"/> follows, for building a following-only feed. </summary>
+        public async Task<IReadOnlyList<string>> GetFollowingIdsAsync(string publicId)
+        {
+            List<string>? ids = await httpClient.GetFromJsonAsync<List<string>>($"/api/follow/{Uri.EscapeDataString(publicId)}/following-ids");
+            return ids ?? [];
+        }
     }
 }
