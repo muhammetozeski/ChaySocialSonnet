@@ -63,6 +63,9 @@
     [Parameter] public string? ViewerPublicId { get; set; }
     [Parameter] public EventCallback<string> OnDeleted { get; set; }
 
+    /// <summary> When true, the comment thread starts open and pre-loaded — used by PostDetail.razor, where seeing the comments immediately is the whole point of following a link to one post. </summary>
+    [Parameter] public bool StartExpanded { get; set; }
+
     bool _liked;
     int _likeCount;
     int _commentCount;
@@ -76,6 +79,15 @@
         _liked = Post.LikedByViewer;
         _likeCount = Post.LikeCount;
         _commentCount = Post.CommentCount;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (StartExpanded)
+        {
+            _showComments = true;
+            _comments = await PostApi.GetCommentsAsync(Post.Id, ViewerPublicId);
+        }
     }
 
     bool CanDelete => ViewerPublicId is not null && ViewerPublicId == Post.AuthorPublicId;

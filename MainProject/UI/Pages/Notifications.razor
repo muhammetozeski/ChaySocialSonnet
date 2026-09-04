@@ -18,7 +18,7 @@
     {
         @foreach (Backend.NotificationResponse notification in _notifications)
         {
-            <GlassCard CustomClass="notification-row">
+            <GlassCard CustomClass="notification-row" OnClick="() => HandleOpen(notification)">
                 <span class="notification-icon">@IconFor(notification.Kind)</span>
                 <p class="notification-text">@DescribeFor(notification)</p>
                 <p class="notification-time">@RelativeTimeFormatter.Format(notification.CreatedAt, DateTimeOffset.UtcNow)</p>
@@ -49,6 +49,18 @@
 
         _notifications = await NotificationsApi.GetForUserAsync(AuthService.CurrentIdentity.PublicId, MaxNotifications);
         await NotificationsApi.MarkAllReadAsync(AuthService.CurrentIdentity.PublicId);
+    }
+
+    void HandleOpen(Backend.NotificationResponse notification)
+    {
+        if (notification.SubjectPostId is not null)
+        {
+            NavManager.NavigateTo($"/post/{notification.SubjectPostId}");
+        }
+        else if (notification.Kind == Backend.NotificationKind.Follow)
+        {
+            NavManager.NavigateTo($"/u/{notification.ActorPublicId}");
+        }
     }
 
     static string IconFor(Backend.NotificationKind kind) => kind switch

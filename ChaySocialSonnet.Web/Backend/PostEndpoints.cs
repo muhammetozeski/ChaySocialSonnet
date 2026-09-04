@@ -23,6 +23,19 @@ namespace ChaySocialSonnet.Web.Backend
                 return Results.Ok(await ToSummariesAsync(visible, viewerPublicId, likes, comments));
             });
 
+            app.MapGet("/api/posts/{postId}", async (string postId, string? viewerPublicId, IPostStore posts, ILikeStore likes, ICommentStore comments, IBlockStore blocks) =>
+            {
+                PublicPost? post = await posts.GetByIdAsync(postId);
+                if (post is null)
+                {
+                    return Results.NotFound();
+                }
+
+                IReadOnlyList<PublicPost> visible = await FilterBlockedAsync([post], viewerPublicId, blocks);
+                PostSummary? summary = (await ToSummariesAsync(visible, viewerPublicId, likes, comments)).SingleOrDefault();
+                return summary is null ? Results.NotFound() : Results.Ok(summary);
+            });
+
             app.MapPost("/api/posts", async (CreatePostRequest request, IPostStore posts, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
                 string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);

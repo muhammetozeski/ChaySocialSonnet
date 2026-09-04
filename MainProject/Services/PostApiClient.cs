@@ -22,6 +22,16 @@ namespace ChaySocialSonnet.MainProject.Services
             return posts ?? [];
         }
 
+        /// <summary> Fetches a single post by id, with like/comment stats resolved for <paramref name="viewerPublicId"/>, or null if it doesn't exist (or was deleted, or is hidden by a block). </summary>
+        public async Task<PostSummary?> GetPostAsync(string postId, string? viewerPublicId)
+        {
+            string viewerQuery = viewerPublicId is null ? "" : $"?viewerPublicId={Uri.EscapeDataString(viewerPublicId)}";
+            HttpResponseMessage response = await httpClient.GetAsync($"/api/posts/{Uri.EscapeDataString(postId)}{viewerQuery}");
+            return response.StatusCode == System.Net.HttpStatusCode.NotFound
+                ? null
+                : await response.Content.ReadFromJsonAsync<PostSummary>();
+        }
+
         /// <summary> Creates a post as the current session's identity (see <see cref="AuthService.SessionToken"/>) — there is no "post as someone else" option. </summary>
         public async Task<PostSummary> CreatePostAsync(string text)
         {

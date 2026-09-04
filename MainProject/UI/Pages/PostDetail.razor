@@ -1,0 +1,62 @@
+@attribute [Route("/post/{PostId}")]
+@inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+@inject PostApiClient PostApi
+<PageTitle>Post</PageTitle>
+
+<div class="post-detail-screen">
+    <BackButton OnClick="HandleBack" />
+
+    @if (_post is null && !_loaded)
+    {
+        <div class="post-detail-loading">
+            <CoreSpinner />
+        </div>
+    }
+    else if (_post is null)
+    {
+        <p class="post-detail-not-found">Post not found — it may have been deleted.</p>
+    }
+    else
+    {
+        <PostCard Post="_post" ViewerPublicId="@ViewerPublicId" OnDeleted="HandlePostDeleted" StartExpanded="true" />
+    }
+</div>
+
+<PostDetailCss />
+
+@code {
+    [Parameter] public string PostId { get; set; } = string.Empty;
+
+    [Inject] IJSRuntime JsRuntime { get; set; } = default!;
+
+    PostSummary? _post;
+    bool _loaded;
+
+    string? ViewerPublicId => AuthService.CurrentIdentity?.PublicId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _post = await PostApi.GetPostAsync(PostId, ViewerPublicId);
+        _loaded = true;
+    }
+
+    void HandlePostDeleted(string postId)
+    {
+        _post = null;
+        StateHasChanged();
+    }
+
+    /// <summary> This page sits outside the bottom-nav tabs (MainLayout hides the tab bar on it), so it needs its own way back. </summary>
+    async Task HandleBack()
+    {
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("history.back");
+        }
+        catch (JSException exception)
+        {
+            Log(exception, LogLevel.Warning);
+            NavManager.NavigateTo("/home");
+        }
+    }
+}
