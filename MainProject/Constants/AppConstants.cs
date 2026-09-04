@@ -5,8 +5,8 @@ namespace ChaySocialSonnet.MainProject.Constants
         /// <summary> Geliştirici modunu ve test araçlarını açıp kapatır. CANLIYA ÇIKARKEN FALSE YAPILMALI. </summary>
         public const bool TestBuild = false;
 
-        public const string AppName = "ChaySocialSonnet";
-        public const string AppNameHumanReadable = "Chay Social Sonnet";
+        public const string AppName = "ChaySocial";
+        public const string AppNameHumanReadable = "Chay Social";
 
         public const string GuestDisplayName = "Guest";
 

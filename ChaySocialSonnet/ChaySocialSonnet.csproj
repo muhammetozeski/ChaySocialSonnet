@@ -29,7 +29,7 @@
     <MauiXamlInflator>SourceGen</MauiXamlInflator>
 
     <!-- Display name -->
-    <ApplicationTitle>ChaySocialSonnet</ApplicationTitle>
+    <ApplicationTitle>Chay Social</ApplicationTitle>
 
     <!-- App Identifier -->
     <ApplicationId>com.companyname.chaysocialsonnet</ApplicationId>

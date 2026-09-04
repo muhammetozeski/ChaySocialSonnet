@@ -9,7 +9,7 @@
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new MainPage()) { Title = "ChaySocialSonnet" };
+            return new Window(new MainPage()) { Title = "Chay Social" };
         }
     }
 }
