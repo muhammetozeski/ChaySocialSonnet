@@ -62,7 +62,7 @@ namespace ChaySocialSonnet.Web.Backend
                 return await posts.DeletePostAsync(postId, actingPublicId) ? Results.Ok() : Results.NotFound();
             });
 
-            app.MapPost("/api/posts/{postId}/like", async (string postId, ILikeStore likes, IPostStore posts, INotificationStore notifications, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
+            app.MapPost("/api/posts/{postId}/like", async (string postId, ILikeStore likes, IPostStore posts, INotificationStore notifications, IBlockStore blocks, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
                 string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
                 if (actingPublicId is null)
@@ -70,27 +70,38 @@ namespace ChaySocialSonnet.Web.Backend
                     return Results.Unauthorized();
                 }
 
+                PublicPost? post = await posts.GetByIdAsync(postId);
+                if (post is null || await IsBlockedEitherWayAsync(actingPublicId, post.AuthorPublicId, blocks))
+                {
+                    return Results.NotFound();
+                }
+
                 bool liked = await likes.ToggleLikeAsync(postId, actingPublicId);
                 int count = await likes.GetLikeCountAsync(postId);
 
-                if (liked)
+                if (liked && post.AuthorPublicId != actingPublicId)
                 {
-                    await NotifyPostAuthorAsync(postId, actingPublicId, NotificationKind.Like, posts, notifications);
+                    await notifications.AddAsync(post.AuthorPublicId, actingPublicId, NotificationKind.Like, postId);
                 }
 
                 return Results.Ok(new ToggleLikeResponse(liked, count));
             });
 
-            app.MapGet("/api/posts/{postId}/comments", async (string postId, string? viewerPublicId, ICommentStore comments, IBlockStore blocks) =>
+            app.MapGet("/api/posts/{postId}/comments", async (string postId, string? viewerPublicId, IPostStore posts, ICommentStore comments, IBlockStore blocks) =>
             {
+                PublicPost? post = await posts.GetByIdAsync(postId);
+                if (post is not null && viewerPublicId is not null && await IsBlockedEitherWayAsync(viewerPublicId, post.AuthorPublicId, blocks))
+                {
+                    return Results.Ok(Array.Empty<CommentResponse>());
+                }
+
                 IReadOnlyList<PostComment> postComments = await comments.GetCommentsAsync(postId);
                 if (viewerPublicId is not null)
                 {
                     var visible = new List<PostComment>(postComments.Count);
                     foreach (PostComment comment in postComments)
                     {
-                        bool hidden = await blocks.IsBlockedAsync(viewerPublicId, comment.AuthorPublicId) || await blocks.IsBlockedAsync(comment.AuthorPublicId, viewerPublicId);
-                        if (!hidden)
+                        if (!await IsBlockedEitherWayAsync(viewerPublicId, comment.AuthorPublicId, blocks))
                         {
                             visible.Add(comment);
                         }
@@ -101,7 +112,7 @@ namespace ChaySocialSonnet.Web.Backend
                 return Results.Ok(postComments.Select(comment => new CommentResponse(comment.Id, comment.AuthorPublicId, comment.Text, comment.CreatedAt)));
             });
 
-            app.MapPost("/api/posts/{postId}/comments", async (string postId, AddCommentRequest request, ICommentStore comments, IPostStore posts, INotificationStore notifications, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
+            app.MapPost("/api/posts/{postId}/comments", async (string postId, AddCommentRequest request, ICommentStore comments, IPostStore posts, INotificationStore notifications, IBlockStore blocks, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
                 string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
                 if (actingPublicId is null)
@@ -113,22 +124,26 @@ namespace ChaySocialSonnet.Web.Backend
                     return Results.BadRequest("text must be non-empty and at most " + MaxTextLength + " characters.");
                 }
 
+                PublicPost? post = await posts.GetByIdAsync(postId);
+                if (post is null || await IsBlockedEitherWayAsync(actingPublicId, post.AuthorPublicId, blocks))
+                {
+                    return Results.NotFound();
+                }
+
                 PostComment comment = await comments.AddCommentAsync(postId, actingPublicId, request.Text);
-                await NotifyPostAuthorAsync(postId, actingPublicId, NotificationKind.Comment, posts, notifications);
+                if (post.AuthorPublicId != actingPublicId)
+                {
+                    await notifications.AddAsync(post.AuthorPublicId, actingPublicId, NotificationKind.Comment, postId);
+                }
                 return Results.Ok(new CommentResponse(comment.Id, comment.AuthorPublicId, comment.Text, comment.CreatedAt));
             });
         }
 
         static bool IsValidText(string text) => !string.IsNullOrWhiteSpace(text) && text.Length <= MaxTextLength;
 
-        static async Task NotifyPostAuthorAsync(string postId, string actorPublicId, NotificationKind kind, IPostStore posts, INotificationStore notifications)
-        {
-            PublicPost? post = await posts.GetByIdAsync(postId);
-            if (post is not null && post.AuthorPublicId != actorPublicId)
-            {
-                await notifications.AddAsync(post.AuthorPublicId, actorPublicId, kind, postId);
-            }
-        }
+        /// <summary> True if either identity has blocked the other — the shared "can these two interact" check for every read filter and every mutating endpoint in this file. </summary>
+        internal static async Task<bool> IsBlockedEitherWayAsync(string a, string b, IBlockStore blocks) =>
+            await blocks.IsBlockedAsync(a, b) || await blocks.IsBlockedAsync(b, a);
 
         /// <summary> Drops posts where the viewer has blocked the author or the author has blocked the viewer, in either direction. A no-op for an anonymous (null) viewer. </summary>
         static async Task<IReadOnlyList<PublicPost>> FilterBlockedAsync(IReadOnlyList<PublicPost> posts, string? viewerPublicId, IBlockStore blocks)
@@ -141,8 +156,7 @@ namespace ChaySocialSonnet.Web.Backend
             var visible = new List<PublicPost>(posts.Count);
             foreach (PublicPost post in posts)
             {
-                bool hidden = await blocks.IsBlockedAsync(viewerPublicId, post.AuthorPublicId) || await blocks.IsBlockedAsync(post.AuthorPublicId, viewerPublicId);
-                if (!hidden)
+                if (!await IsBlockedEitherWayAsync(viewerPublicId, post.AuthorPublicId, blocks))
                 {
                     visible.Add(post);
                 }

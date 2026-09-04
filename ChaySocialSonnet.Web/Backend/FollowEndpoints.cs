@@ -8,12 +8,16 @@ namespace ChaySocialSonnet.Web.Backend
     {
         public static void MapFollowEndpoints(this IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/follow/{targetPublicId}", async (string targetPublicId, IFollowStore follows, INotificationStore notifications, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
+            app.MapPost("/api/follow/{targetPublicId}", async (string targetPublicId, IFollowStore follows, INotificationStore notifications, IBlockStore blocks, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
                 string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
                 if (actingPublicId is null)
                 {
                     return Results.Unauthorized();
+                }
+                if (await PostEndpoints.IsBlockedEitherWayAsync(actingPublicId, targetPublicId, blocks))
+                {
+                    return Results.NotFound();
                 }
 
                 await follows.FollowAsync(actingPublicId, targetPublicId);

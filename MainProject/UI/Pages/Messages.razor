@@ -131,7 +131,7 @@
 
             (byte[] encapsulatedKey, byte[] sharedSecret) = Services.Identity.IdentityService.Encapsulate(recipientEncryptionKey);
             byte[] ciphertext = Services.Identity.IdentityService.EncryptMessage(sharedSecret, text);
-            await MessagesApi.SendAsync(AuthService.CurrentIdentity.PublicId, peerId, encapsulatedKey, ciphertext);
+            await MessagesApi.SendAsync(peerId, encapsulatedKey, ciphertext);
 
             var sentMessage = new ChatMessage(text, DateTimeOffset.UtcNow, IsMine: true);
             if (!_sentThisSessionByPeer.TryGetValue(peerId, out List<ChatMessage>? sent))

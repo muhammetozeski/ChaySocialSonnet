@@ -8,14 +8,24 @@ namespace ChaySocialSonnet.Web.Backend
     {
         public static void MapNotificationEndpoints(this IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/notifications/{publicId}", async (string publicId, int count, INotificationStore notifications) =>
+            app.MapGet("/api/notifications/{publicId}", async (string publicId, int count, INotificationStore notifications, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
+                string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
+                if (actingPublicId is null || actingPublicId != publicId)
+                {
+                    return Results.Unauthorized();
+                }
                 IReadOnlyList<AppNotification> results = await notifications.GetForUserAsync(publicId, count);
                 return Results.Ok(results.Select(notification => new NotificationResponse(notification.Id, notification.ActorPublicId, notification.Kind, notification.SubjectPostId, notification.CreatedAt, notification.IsRead)));
             });
 
-            app.MapGet("/api/notifications/{publicId}/unread-count", async (string publicId, INotificationStore notifications) =>
-                Results.Ok(await notifications.GetUnreadCountAsync(publicId)));
+            app.MapGet("/api/notifications/{publicId}/unread-count", async (string publicId, INotificationStore notifications, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
+            {
+                string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
+                return actingPublicId is null || actingPublicId != publicId
+                    ? Results.Unauthorized()
+                    : Results.Ok(await notifications.GetUnreadCountAsync(publicId));
+            });
 
             app.MapPost("/api/notifications/{publicId}/mark-read", async (string publicId, [FromHeader(Name = "Authorization")] string? authorization, INotificationStore notifications, IIdentityRegistry registry) =>
             {
