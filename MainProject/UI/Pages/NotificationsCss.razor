@@ -1,0 +1,46 @@
+@namespace ChaySocialSonnet.MainProject.UI.Pages
+<style>
+    .notifications-screen {
+        display: flex;
+        flex-direction: column;
+        gap: @(AppMeasures.Space.Small)px;
+        padding: @(AppMeasures.Space.Large)px;
+    }
+
+    .notifications-loading {
+        display: flex;
+        justify-content: center;
+        padding: @(AppMeasures.Space.Large)px;
+    }
+
+    .notifications-empty {
+        margin: 0;
+        text-align: center;
+        padding: @(AppMeasures.Space.Large)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+    }
+
+    .notification-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: @(AppMeasures.Space.Medium)px;
+    }
+
+    .notification-icon {
+        font-size: @(AppMeasures.Font.Large)px;
+    }
+
+    .notification-text {
+        flex: 1;
+        margin: 0;
+        color: @(AppColors.TextPrimary.ToRgbaHex(true));
+    }
+
+    .notification-time {
+        margin: 0;
+        font-size: @(AppMeasures.Font.XSmall)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+        white-space: nowrap;
+    }
+</style>

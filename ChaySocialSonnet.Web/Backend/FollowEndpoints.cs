@@ -1,4 +1,5 @@
 using ChaySocialSonnet.MainProject.Backend;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ChaySocialSonnet.Web.Backend
 {
@@ -17,7 +18,7 @@ namespace ChaySocialSonnet.Web.Backend
                 return Results.Ok(await BuildStatusAsync(targetPublicId, request.FollowerPublicId, follows));
             });
 
-            app.MapDelete("/api/follow/{targetPublicId}", async (string targetPublicId, FollowRequest request, IFollowStore follows) =>
+            app.MapDelete("/api/follow/{targetPublicId}", async (string targetPublicId, [FromBody] FollowRequest request, IFollowStore follows) =>
             {
                 await follows.UnfollowAsync(request.FollowerPublicId, targetPublicId);
                 return Results.Ok(await BuildStatusAsync(targetPublicId, request.FollowerPublicId, follows));

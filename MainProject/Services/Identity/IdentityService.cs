@@ -1,10 +1,13 @@
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Kems;
+using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using Org.BouncyCastle.Security;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace ChaySocialSonnet.MainProject.Services.Identity
 {
@@ -101,6 +104,53 @@ namespace ChaySocialSonnet.MainProject.Services.Identity
             decapsulator.Decapsulate(ciphertext, 0, ciphertext.Length, sharedSecret, 0, sharedSecret.Length);
 
             return sharedSecret;
+        }
+
+        /// <summary> Length in bytes of the random nonce <see cref="EncryptMessage"/> prefixes to its output. </summary>
+        const int GcmNonceLengthBytes = 12;
+        const int GcmMacLengthBits = 128;
+
+        /// <summary>
+        /// Encrypts <paramref name="plaintext"/> with AES-256-GCM under an ML-KEM shared secret (from
+        /// <see cref="Encapsulate"/>/<see cref="Decapsulate"/>). Uses BouncyCastle's own AES-GCM rather than
+        /// <see cref="System.Security.Cryptography.AesGcm"/> for the same reason the rest of this class avoids
+        /// .NET's built-in PQC types: a fully managed implementation behaves identically on MAUI and under
+        /// Blazor WebAssembly. Returns a random 12-byte nonce followed by the ciphertext+tag.
+        /// </summary>
+        public static byte[] EncryptMessage(byte[] sharedSecret, string plaintext)
+        {
+            byte[] key = SHA256.HashData(sharedSecret);
+            byte[] nonce = RandomNumberGenerator.GetBytes(GcmNonceLengthBytes);
+
+            var cipher = new GcmBlockCipher(new AesEngine());
+            cipher.Init(forEncryption: true, new AeadParameters(new KeyParameter(key), GcmMacLengthBits, nonce));
+
+            byte[] plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
+            byte[] output = new byte[cipher.GetOutputSize(plaintextBytes.Length)];
+            int length = cipher.ProcessBytes(plaintextBytes, 0, plaintextBytes.Length, output, 0);
+            length += cipher.DoFinal(output, length);
+
+            byte[] result = new byte[nonce.Length + length];
+            Buffer.BlockCopy(nonce, 0, result, 0, nonce.Length);
+            Buffer.BlockCopy(output, 0, result, nonce.Length, length);
+            return result;
+        }
+
+        /// <summary> Reverses <see cref="EncryptMessage"/> given the same shared secret. </summary>
+        public static string DecryptMessage(byte[] sharedSecret, byte[] nonceAndCiphertext)
+        {
+            byte[] key = SHA256.HashData(sharedSecret);
+            byte[] nonce = nonceAndCiphertext[..GcmNonceLengthBytes];
+            byte[] ciphertext = nonceAndCiphertext[GcmNonceLengthBytes..];
+
+            var cipher = new GcmBlockCipher(new AesEngine());
+            cipher.Init(forEncryption: false, new AeadParameters(new KeyParameter(key), GcmMacLengthBits, nonce));
+
+            byte[] output = new byte[cipher.GetOutputSize(ciphertext.Length)];
+            int length = cipher.ProcessBytes(ciphertext, 0, ciphertext.Length, output, 0);
+            length += cipher.DoFinal(output, length);
+
+            return Encoding.UTF8.GetString(output, 0, length);
         }
     }
 }

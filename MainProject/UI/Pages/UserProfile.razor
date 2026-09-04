@@ -1,0 +1,170 @@
+@attribute [Route("/u/{PublicId}")]
+@inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+@inject Services.Identity.IdentityApiClient IdentityApi
+@inject FollowApiClient FollowApi
+@inject PostApiClient PostApi
+@inject SafetyApiClient SafetyApi
+@inject IJSRuntime JsRuntime
+<PageTitle>@(_summary?.DisplayName ?? "Profile")</PageTitle>
+
+<div class="user-profile-screen">
+    <BackButton OnClick="HandleBack" />
+
+    @if (_summary is null)
+    {
+        <div class="user-profile-loading">
+            <CoreSpinner />
+        </div>
+    }
+    else
+    {
+        <GlassCard CustomClass="user-profile-card">
+            <span class="profile-avatar">@AppConstants.Avatar.DefaultUser</span>
+            <h1 class="profile-name">@_summary.DisplayName</h1>
+            <p class="profile-identity">@_summary.PublicId</p>
+
+            <div class="user-profile-stats">
+                <span>@_followStatus.FollowerCount followers</span>
+                <span>@_followStatus.FollowingCount following</span>
+            </div>
+
+            @if (IsOwnProfile)
+            {
+                <p class="user-profile-self-note">This is you.</p>
+            }
+            else if (ViewerPublicId is not null)
+            {
+                <div class="user-profile-actions">
+                    <PrimaryButton OnClick="HandleToggleFollow">
+                        <span>@(_followStatus.IsFollowing ? "Unfollow" : "Follow")</span>
+                    </PrimaryButton>
+                    @if (_blocked)
+                    {
+                        <SecondaryButton OnClick="HandleUnblock"><span>Unblock</span></SecondaryButton>
+                    }
+                    else
+                    {
+                        <DangerButton OnClick="HandleBlock"><span>Block</span></DangerButton>
+                    }
+                    <IconButton OnClick="HandleReport"><span>🚩</span></IconButton>
+                </div>
+                @if (_reportSent)
+                {
+                    <p class="user-profile-report-sent">Report sent — thank you.</p>
+                }
+            }
+        </GlassCard>
+
+        @if (_posts is null)
+        {
+            <div class="user-profile-loading">
+                <CoreSpinner />
+            </div>
+        }
+        else if (_posts.Count == 0)
+        {
+            <p class="user-profile-empty">No posts yet.</p>
+        }
+        else
+        {
+            @foreach (PostSummary post in _posts)
+            {
+                <PostCard Post="post" ViewerPublicId="@ViewerPublicId" OnDeleted="HandlePostDeleted" />
+            }
+        }
+    }
+</div>
+
+<UserProfileCss />
+
+@code {
+    const int RecentPostsCount = 30;
+
+    [Parameter] public string PublicId { get; set; } = string.Empty;
+
+    Backend.IdentitySummary? _summary;
+    Backend.FollowStatusResponse _followStatus = new(false, 0, 0);
+    IReadOnlyList<PostSummary>? _posts;
+    bool _blocked;
+    bool _reportSent;
+
+    string? ViewerPublicId => AuthService.CurrentIdentity?.PublicId;
+    bool IsOwnProfile => ViewerPublicId is not null && ViewerPublicId == PublicId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _summary = await IdentityApi.GetSummaryAsync(PublicId);
+        _followStatus = await FollowApi.GetStatusAsync(PublicId, ViewerPublicId);
+        _posts = await PostApi.GetPostsByAuthorAsync(PublicId, RecentPostsCount, ViewerPublicId);
+
+        if (ViewerPublicId is not null && !IsOwnProfile)
+        {
+            _blocked = await SafetyApi.IsBlockedAsync(ViewerPublicId, PublicId);
+        }
+    }
+
+    async Task HandleToggleFollow()
+    {
+        if (ViewerPublicId is null)
+        {
+            return;
+        }
+
+        _followStatus = _followStatus.IsFollowing
+            ? await FollowApi.UnfollowAsync(ViewerPublicId, PublicId)
+            : await FollowApi.FollowAsync(ViewerPublicId, PublicId);
+    }
+
+    async Task HandleBlock()
+    {
+        if (ViewerPublicId is null)
+        {
+            return;
+        }
+
+        await SafetyApi.BlockAsync(ViewerPublicId, PublicId);
+        _blocked = true;
+    }
+
+    async Task HandleUnblock()
+    {
+        if (ViewerPublicId is null)
+        {
+            return;
+        }
+
+        await SafetyApi.UnblockAsync(ViewerPublicId, PublicId);
+        _blocked = false;
+    }
+
+    async Task HandleReport()
+    {
+        if (ViewerPublicId is null)
+        {
+            return;
+        }
+
+        await SafetyApi.SubmitReportAsync(ViewerPublicId, "user", PublicId, "Reported from profile");
+        _reportSent = true;
+    }
+
+    void HandlePostDeleted(string postId)
+    {
+        _posts = _posts?.Where(post => post.Id != postId).ToList();
+        StateHasChanged();
+    }
+
+    /// <summary> This page sits outside the bottom-nav tabs (MainLayout hides the tab bar on it), so it needs its own way back. </summary>
+    async Task HandleBack()
+    {
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("history.back");
+        }
+        catch (JSException exception)
+        {
+            Log(exception, LogLevel.Warning);
+            NavManager.NavigateTo("/home");
+        }
+    }
+}

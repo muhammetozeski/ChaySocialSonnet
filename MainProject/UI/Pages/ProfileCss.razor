@@ -3,9 +3,30 @@
     .profile-screen {
         min-height: @(AppMeasures.Viewport.Full)vh;
         display: flex;
+        flex-direction: column;
         align-items: center;
+        gap: @(AppMeasures.Space.Medium)px;
+        padding: @(AppMeasures.Space.Large)px;
+    }
+
+    .profile-stats {
+        display: flex;
+        gap: @(AppMeasures.Space.Medium)px;
+        font-size: @(AppMeasures.Font.Small)px;
+        color: @(AppColors.TextSecondary.ToRgbaHex(true));
+    }
+
+    .profile-posts-loading {
+        display: flex;
         justify-content: center;
         padding: @(AppMeasures.Space.Large)px;
+    }
+
+    .profile-posts-empty {
+        margin: 0;
+        text-align: center;
+        padding: @(AppMeasures.Space.Large)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
     }
 
     .profile-card {
@@ -26,7 +47,7 @@
         margin: 0;
         font-size: @(AppMeasures.Font.Title)px;
         font-weight: @(AppMeasures.Weight.Heavy);
-        color: @AppColors.TextPrimary;
+        color: @(AppColors.TextPrimary.ToRgbaHex(true));
     }
 
     .profile-identity-row {
@@ -41,7 +62,7 @@
         flex: 1;
         min-width: 0;
         font-size: @(AppMeasures.Font.Small)px;
-        color: @AppColors.TextMuted;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
         word-break: break-all;
         text-align: left;
     }

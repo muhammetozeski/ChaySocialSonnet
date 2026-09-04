@@ -21,13 +21,13 @@
         margin: 0;
         font-size: @(AppMeasures.Font.Hero)px;
         font-weight: @(AppMeasures.Weight.Heavy);
-        color: @AppColors.TextPrimary;
+        color: @(AppColors.TextPrimary.ToRgbaHex(true));
     }
 
     .login-subtitle {
         margin: 0 0 @(AppMeasures.Space.Small)px 0;
         font-size: @(AppMeasures.Font.Normal)px;
-        color: @AppColors.TextSecondary;
+        color: @(AppColors.TextSecondary.ToRgbaHex(true));
     }
 
     .login-identity-box {
@@ -42,20 +42,20 @@
     .login-identity-label {
         margin: 0;
         font-size: @(AppMeasures.Font.Small)px;
-        color: @AppColors.TextMuted;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
     }
 
     .login-identity-value {
         margin: 0;
         font-size: @(AppMeasures.Font.Medium)px;
         font-weight: @(AppMeasures.Weight.Semibold);
-        color: @AppColors.TextPrimary;
+        color: @(AppColors.TextPrimary.ToRgbaHex(true));
         word-break: break-all;
     }
 
     .login-error {
         margin: 0;
         font-size: @(AppMeasures.Font.Small)px;
-        color: @AppColors.TextDanger;
+        color: @(AppColors.TextDanger.ToRgbaHex(true));
     }
 </style>

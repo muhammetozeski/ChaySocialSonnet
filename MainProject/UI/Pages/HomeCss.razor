@@ -39,12 +39,13 @@
         margin: 0;
         text-align: center;
         padding: @(AppMeasures.Space.Large)px;
-        color: @AppColors.TextMuted;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
         font-size: @(AppMeasures.Font.Normal)px;
     }
 
     .home-composer {
         display: flex;
+        flex-direction: row;
         align-items: center;
         gap: @(AppMeasures.Space.Small)px;
     }
@@ -56,6 +57,6 @@
     .home-composer-error {
         margin: @(AppMeasures.Space.Px4)px 0 0;
         font-size: @(AppMeasures.Font.Small)px;
-        color: @AppColors.TextDanger;
+        color: @(AppColors.TextDanger.ToRgbaHex(true));
     }
 </style>

@@ -1,0 +1,74 @@
+@namespace ChaySocialSonnet.MainProject.UI.Pages
+<style>
+    .user-profile-screen {
+        display: flex;
+        flex-direction: column;
+        gap: @(AppMeasures.Space.Medium)px;
+        padding: @(AppMeasures.Space.Large)px;
+    }
+
+    .user-profile-loading {
+        display: flex;
+        justify-content: center;
+        padding: @(AppMeasures.Space.Large)px;
+    }
+
+    .user-profile-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: @(AppMeasures.Space.Medium)px;
+        text-align: center;
+    }
+
+    .profile-avatar {
+        font-size: @(AppMeasures.Font.Giant)px;
+    }
+
+    .profile-name {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Title)px;
+        font-weight: @(AppMeasures.Weight.Heavy);
+        color: @(AppColors.TextPrimary.ToRgbaHex(true));
+    }
+
+    .profile-identity {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Small)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+        word-break: break-all;
+    }
+
+    .user-profile-stats {
+        display: flex;
+        gap: @(AppMeasures.Space.Medium)px;
+        font-size: @(AppMeasures.Font.Small)px;
+        color: @(AppColors.TextSecondary.ToRgbaHex(true));
+    }
+
+    .user-profile-self-note {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Small)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+        font-style: italic;
+    }
+
+    .user-profile-actions {
+        display: flex;
+        gap: @(AppMeasures.Space.Small)px;
+        align-items: center;
+    }
+
+    .user-profile-report-sent {
+        margin: 0;
+        font-size: @(AppMeasures.Font.XSmall)px;
+        color: @(AppColors.TextSuccess.ToRgbaHex(true));
+    }
+
+    .user-profile-empty {
+        margin: 0;
+        text-align: center;
+        padding: @(AppMeasures.Space.Large)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+    }
+</style>

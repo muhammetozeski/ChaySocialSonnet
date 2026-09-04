@@ -2,6 +2,8 @@
 @inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
 @inject IIdentityKeyStore KeyStore
 @inject IJSRuntime JsRuntime
+@inject FollowApiClient FollowApi
+@inject PostApiClient PostApi
 @using System.Globalization
 <PageTitle>Profile</PageTitle>
 
@@ -21,21 +23,66 @@
             <CoreChip Text="@_copyFeedback" />
         }
 
+        <div class="profile-stats">
+            <span>@_followStatus.FollowerCount followers</span>
+            <span>@_followStatus.FollowingCount following</span>
+        </div>
+
         <DangerButton IsFullWidth="true" OnClick="HandleSignOut">
             <span>Sign out</span>
         </DangerButton>
     </GlassCard>
+
+    @if (_posts is null)
+    {
+        <div class="profile-posts-loading">
+            <CoreSpinner />
+        </div>
+    }
+    else if (_posts.Count == 0)
+    {
+        <p class="profile-posts-empty">You haven't posted anything yet.</p>
+    }
+    else
+    {
+        @foreach (PostSummary post in _posts)
+        {
+            <PostCard Post="post" ViewerPublicId="@AuthService.CurrentIdentity?.PublicId" OnDeleted="HandlePostDeleted" />
+        }
+    }
 </div>
 
 <ProfileCss />
 
 @code {
+    const int OwnPostsCount = 50;
+
     string? _copyFeedback;
+    Backend.FollowStatusResponse _followStatus = new(false, 0, 0);
+    IReadOnlyList<PostSummary>? _posts;
 
     protected override void OnInitialized()
     {
         RequireAuth = true;
         base.OnInitialized();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        string? publicId = AuthService.CurrentIdentity?.PublicId;
+        if (publicId is null)
+        {
+            return;
+        }
+
+        _followStatus = await FollowApi.GetStatusAsync(publicId, publicId);
+        _posts = await PostApi.GetPostsByAuthorAsync(publicId, OwnPostsCount, publicId);
+    }
+
+    void HandlePostDeleted(string postId)
+    {
+        _posts = _posts?.Where(post => post.Id != postId).ToList();
+        StateHasChanged();
     }
 
     string _displayName => string.IsNullOrWhiteSpace(UserProfileService.LoggedUserProfileData?.DisplayName)

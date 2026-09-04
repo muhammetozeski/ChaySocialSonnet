@@ -1,4 +1,5 @@
 using ChaySocialSonnet.MainProject.Backend;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ChaySocialSonnet.Web.Backend
 {
@@ -13,7 +14,7 @@ namespace ChaySocialSonnet.Web.Backend
                 return Results.Ok();
             });
 
-            app.MapDelete("/api/block/{blockedPublicId}", async (string blockedPublicId, BlockRequest request, IBlockStore blocks) =>
+            app.MapDelete("/api/block/{blockedPublicId}", async (string blockedPublicId, [FromBody] BlockRequest request, IBlockStore blocks) =>
             {
                 await blocks.UnblockAsync(request.BlockerPublicId, blockedPublicId);
                 return Results.Ok();

@@ -1,0 +1,44 @@
+@namespace ChaySocialSonnet.MainProject.UI.Pages
+<style>
+    .search-screen {
+        display: flex;
+        flex-direction: column;
+        gap: @(AppMeasures.Space.Small)px;
+        padding: @(AppMeasures.Space.Large)px;
+    }
+
+    .search-result {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: @(AppMeasures.Space.Medium)px;
+    }
+
+    .search-result-avatar {
+        font-size: @(AppMeasures.Font.Hero)px;
+    }
+
+    .search-result-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .search-result-name {
+        margin: 0;
+        font-weight: @(AppMeasures.Weight.Semibold);
+        color: @(AppColors.TextPrimary.ToRgbaHex(true));
+    }
+
+    .search-result-id {
+        margin: 0;
+        font-size: @(AppMeasures.Font.XSmall)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+    }
+
+    .search-empty {
+        margin: 0;
+        text-align: center;
+        padding: @(AppMeasures.Space.Large)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+    }
+</style>

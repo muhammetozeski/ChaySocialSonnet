@@ -49,6 +49,12 @@ namespace ChaySocialSonnet.Web.Backend
 
             app.MapGet("/api/identity/search", async (string query, int count, IIdentityRegistry registry) =>
                 Results.Ok(await registry.SearchAsync(query, count)));
+
+            app.MapGet("/api/identity/{publicId}/encryption-key", async (string publicId, IIdentityRegistry registry) =>
+            {
+                byte[]? key = await registry.GetEncryptionPublicKeyAsync(publicId);
+                return key is null ? Results.NotFound() : Results.Ok(Convert.ToBase64String(key));
+            });
         }
     }
 }

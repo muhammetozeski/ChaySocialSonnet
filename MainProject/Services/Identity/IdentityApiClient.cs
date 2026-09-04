@@ -57,5 +57,17 @@ namespace ChaySocialSonnet.MainProject.Services.Identity
                 $"/api/identity/search?query={Uri.EscapeDataString(query)}&count={count}");
             return results ?? [];
         }
+
+        /// <summary> Looks up a registered identity's ML-KEM encryption public key, so a message can be encrypted to it. Null if unregistered. </summary>
+        public async Task<byte[]?> GetEncryptionPublicKeyAsync(string publicId)
+        {
+            HttpResponseMessage response = await httpClient.GetAsync($"/api/identity/{Uri.EscapeDataString(publicId)}/encryption-key");
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+            string base64 = (await response.Content.ReadFromJsonAsync<string>())!;
+            return Convert.FromBase64String(base64);
+        }
     }
 }

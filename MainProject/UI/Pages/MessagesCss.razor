@@ -1,0 +1,84 @@
+@namespace ChaySocialSonnet.MainProject.UI.Pages
+<style>
+    .messages-screen {
+        display: flex;
+        flex-direction: column;
+        gap: @(AppMeasures.Space.Medium)px;
+        padding: @(AppMeasures.Space.Large)px;
+    }
+
+    .messages-peer-picker {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: @(AppMeasures.Space.Small)px;
+    }
+
+    .messages-peer-picker .core-input-group {
+        flex: 1;
+    }
+
+    .messages-thread {
+        display: flex;
+        flex-direction: column;
+        gap: @(AppMeasures.Space.Small)px;
+    }
+
+    .messages-thread-peer {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Small)px;
+        font-weight: @(AppMeasures.Weight.Semibold);
+        color: @(AppColors.TextSecondary.ToRgbaHex(true));
+    }
+
+    .messages-empty {
+        margin: 0;
+        text-align: center;
+        padding: @(AppMeasures.Space.Medium)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+        font-size: @(AppMeasures.Font.Small)px;
+    }
+
+    .messages-bubble {
+        max-width: @(AppMeasures.Percent.Most)%;
+        padding: @(AppMeasures.Space.Small)px @(AppMeasures.Space.Medium)px;
+        border-radius: @(AppMeasures.Radius.Large)px;
+        background: @(AppColors.Background.ToRgbaHex(true));
+        align-self: flex-start;
+    }
+
+    .messages-bubble--mine {
+        align-self: flex-end;
+        background: @(AppColors.Accent.ToRgbaHex(true));
+    }
+
+    .messages-bubble-text {
+        margin: 0;
+        color: @(AppColors.TextPrimary.ToRgbaHex(true));
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .messages-bubble-time {
+        margin: @(AppMeasures.Space.Px4)px 0 0;
+        font-size: @(AppMeasures.Font.XSmall)px;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
+    }
+
+    .messages-composer {
+        display: flex;
+        align-items: center;
+        gap: @(AppMeasures.Space.Small)px;
+        margin-top: @(AppMeasures.Space.Small)px;
+    }
+
+    .messages-composer .core-input-group {
+        flex: 1;
+    }
+
+    .messages-error {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Small)px;
+        color: @(AppColors.TextDanger.ToRgbaHex(true));
+    }
+</style>

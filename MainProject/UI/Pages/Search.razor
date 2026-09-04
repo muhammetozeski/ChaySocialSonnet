@@ -1,0 +1,49 @@
+@attribute [Route("/search")]
+@inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+@inject Services.Identity.IdentityApiClient IdentityApi
+<PageTitle>Search</PageTitle>
+
+<div class="search-screen">
+    <GlassCard CustomClass="search-box">
+        <CoreInput Placeholder="Search by name or identity id…" @bind-Value="_query" @bind-Value:after="HandleSearch" />
+    </GlassCard>
+
+    @if (_results is not null)
+    {
+        @if (_results.Count == 0)
+        {
+            <p class="search-empty">No one found.</p>
+        }
+        else
+        {
+            @foreach (Backend.IdentitySummary result in _results)
+            {
+                <GlassCard CustomClass="search-result" OnClick="() => HandleOpenProfile(result.PublicId)">
+                    <span class="search-result-avatar">@AppConstants.Avatar.DefaultUser</span>
+                    <div class="search-result-text">
+                        <p class="search-result-name">@result.DisplayName</p>
+                        <p class="search-result-id">@result.PublicId</p>
+                    </div>
+                </GlassCard>
+            }
+        }
+    }
+</div>
+
+<SearchCss />
+
+@code {
+    const int MaxResults = 20;
+
+    string _query = string.Empty;
+    IReadOnlyList<Backend.IdentitySummary>? _results;
+
+    async Task HandleSearch()
+    {
+        _results = string.IsNullOrWhiteSpace(_query)
+            ? null
+            : await IdentityApi.SearchAsync(_query.Trim(), MaxResults);
+    }
+
+    void HandleOpenProfile(string publicId) => NavManager.NavigateTo($"/u/{publicId}");
+}

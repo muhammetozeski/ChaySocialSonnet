@@ -1,4 +1,5 @@
 using ChaySocialSonnet.MainProject.Backend;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ChaySocialSonnet.Web.Backend
 {
@@ -19,7 +20,7 @@ namespace ChaySocialSonnet.Web.Backend
                 return Results.Ok(new PostSummary(post.Id, post.AuthorPublicId, post.Text, post.CreatedAt, LikeCount: 0, CommentCount: 0, LikedByViewer: false));
             });
 
-            app.MapDelete("/api/posts/{postId}", async (string postId, DeletePostRequest request, IPostStore posts) =>
+            app.MapDelete("/api/posts/{postId}", async (string postId, [FromBody] DeletePostRequest request, IPostStore posts) =>
                 await posts.DeletePostAsync(postId, request.RequestingPublicId) ? Results.Ok() : Results.NotFound());
 
             app.MapPost("/api/posts/{postId}/like", async (string postId, ToggleLikeRequest request, ILikeStore likes, IPostStore posts, INotificationStore notifications) =>

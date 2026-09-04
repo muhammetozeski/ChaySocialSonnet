@@ -82,5 +82,44 @@ namespace ChaySocialSonnet.MainProject.Tests.Services.Identity
 
             Assert.NotEqual(firstSecret, secondSecret);
         }
+
+        [Fact]
+        public void EncryptMessage_ThenDecryptMessage_RecoversOriginalPlaintext()
+        {
+            var sender = IdentityService.GenerateIdentity();
+            var recipient = IdentityService.GenerateIdentity();
+            const string plaintext = "Selam! Bu mesaj ucdan uca sifreli.";
+
+            var (encapsulatedKey, senderSecret) = IdentityService.Encapsulate(recipient.EncryptionPublicKey);
+            var ciphertext = IdentityService.EncryptMessage(senderSecret, plaintext);
+
+            var recipientSecret = IdentityService.Decapsulate(recipient.EncryptionPrivateKey, encapsulatedKey);
+            var decrypted = IdentityService.DecryptMessage(recipientSecret, ciphertext);
+
+            Assert.Equal(plaintext, decrypted);
+        }
+
+        [Fact]
+        public void EncryptMessage_TwoCallsWithSameSecretAndPlaintext_ProduceDifferentCiphertext()
+        {
+            var recipient = IdentityService.GenerateIdentity();
+            var (_, sharedSecret) = IdentityService.Encapsulate(recipient.EncryptionPublicKey);
+
+            var first = IdentityService.EncryptMessage(sharedSecret, "same message");
+            var second = IdentityService.EncryptMessage(sharedSecret, "same message");
+
+            Assert.NotEqual(first, second);
+        }
+
+        [Fact]
+        public void DecryptMessage_WithWrongSharedSecret_Throws()
+        {
+            var recipient = IdentityService.GenerateIdentity();
+            var (_, rightSecret) = IdentityService.Encapsulate(recipient.EncryptionPublicKey);
+            var (_, wrongSecret) = IdentityService.Encapsulate(recipient.EncryptionPublicKey);
+            var ciphertext = IdentityService.EncryptMessage(rightSecret, "top secret");
+
+            Assert.ThrowsAny<Exception>(() => IdentityService.DecryptMessage(wrongSecret, ciphertext));
+        }
     }
 }

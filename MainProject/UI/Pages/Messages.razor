@@ -1,0 +1,140 @@
+@attribute [Route("/messages")]
+@inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+@inject MessagesApiClient MessagesApi
+@inject Services.Identity.IdentityApiClient IdentityApi
+<PageTitle>Messages</PageTitle>
+
+<div class="messages-screen">
+    <GlassCard CustomClass="messages-peer-picker">
+        <CoreInput Placeholder="Recipient's identity id" @bind-Value="_peerId" />
+        <PrimaryButton OnClick="HandleOpenThread"><span>Open</span></PrimaryButton>
+    </GlassCard>
+
+    @if (_activePeerId is not null)
+    {
+        <GlassCard CustomClass="messages-thread">
+            <p class="messages-thread-peer">@_activePeerId</p>
+
+            @if (_thread.Count == 0)
+            {
+                <p class="messages-empty">No messages yet — say hello.</p>
+            }
+            else
+            {
+                @foreach (ChatMessage message in _thread)
+                {
+                    <div class="messages-bubble @(message.IsMine ? "messages-bubble--mine" : "")">
+                        <p class="messages-bubble-text">@message.Text</p>
+                        <p class="messages-bubble-time">@RelativeTimeFormatter.Format(message.SentAt, DateTimeOffset.UtcNow)</p>
+                    </div>
+                }
+            }
+
+            <div class="messages-composer">
+                <CoreInput Placeholder="Write an encrypted message…" @bind-Value="_draftText" />
+                <PrimaryButton Disabled="@_sending.IsBusy" OnClick="HandleSend">
+                    @if (_sending.IsBusy)
+                    {
+                        <CoreSpinner SizePx="@AppMeasures.Size.Px20" Color="@AppColors.TextOnAccent" />
+                    }
+                    else
+                    {
+                        <span>Send</span>
+                    }
+                </PrimaryButton>
+            </div>
+            @if (_sending.ErrorMessage is not null)
+            {
+                <p class="messages-error">@_sending.ErrorMessage</p>
+            }
+        </GlassCard>
+    }
+</div>
+
+<MessagesCss />
+
+@code {
+    sealed record ChatMessage(string Text, DateTimeOffset SentAt, bool IsMine);
+
+    string _peerId = string.Empty;
+    string? _activePeerId;
+    string _draftText = string.Empty;
+    AsyncOperationState _sending = null!;
+    readonly Dictionary<string, List<ChatMessage>> _sentThisSessionByPeer = [];
+    List<ChatMessage> _thread = [];
+
+    protected override void OnInitialized()
+    {
+        RequireAuth = true;
+        base.OnInitialized();
+        _sending = new AsyncOperationState(StateHasChanged);
+    }
+
+    async Task HandleOpenThread()
+    {
+        if (string.IsNullOrWhiteSpace(_peerId) || AuthService.CurrentIdentity is null)
+        {
+            return;
+        }
+
+        _activePeerId = _peerId.Trim();
+        await LoadThreadAsync();
+    }
+
+    async Task LoadThreadAsync()
+    {
+        if (_activePeerId is null || AuthService.CurrentIdentity is null)
+        {
+            return;
+        }
+
+        IReadOnlyList<Backend.EncryptedMessageResponse> inbox = await MessagesApi.GetInboxAsync(AuthService.CurrentIdentity.PublicId);
+        List<ChatMessage> received = inbox
+            .Where(message => message.SenderPublicId == _activePeerId)
+            .Select(message =>
+            {
+                byte[] sharedSecret = Services.Identity.IdentityService.Decapsulate(AuthService.CurrentIdentity.EncryptionPrivateKey, Convert.FromBase64String(message.EncapsulatedKeyBase64));
+                string text = Services.Identity.IdentityService.DecryptMessage(sharedSecret, Convert.FromBase64String(message.CiphertextBase64));
+                return new ChatMessage(text, message.SentAt, IsMine: false);
+            })
+            .ToList();
+
+        List<ChatMessage> sentThisSession = _sentThisSessionByPeer.TryGetValue(_activePeerId, out List<ChatMessage>? sent) ? sent : [];
+        _thread = [.. received, .. sentThisSession];
+        _thread.Sort((a, b) => a.SentAt.CompareTo(b.SentAt));
+    }
+
+    async Task HandleSend()
+    {
+        if (string.IsNullOrWhiteSpace(_draftText) || _activePeerId is null || AuthService.CurrentIdentity is null)
+        {
+            return;
+        }
+
+        string peerId = _activePeerId;
+        string text = _draftText;
+
+        await _sending.RunAsync(async () =>
+        {
+            byte[]? recipientEncryptionKey = await IdentityApi.GetEncryptionPublicKeyAsync(peerId);
+            if (recipientEncryptionKey is null)
+            {
+                throw new InvalidOperationException("That identity isn't registered.");
+            }
+
+            (byte[] encapsulatedKey, byte[] sharedSecret) = Services.Identity.IdentityService.Encapsulate(recipientEncryptionKey);
+            byte[] ciphertext = Services.Identity.IdentityService.EncryptMessage(sharedSecret, text);
+            await MessagesApi.SendAsync(AuthService.CurrentIdentity.PublicId, peerId, encapsulatedKey, ciphertext);
+
+            var sentMessage = new ChatMessage(text, DateTimeOffset.UtcNow, IsMine: true);
+            if (!_sentThisSessionByPeer.TryGetValue(peerId, out List<ChatMessage>? sent))
+            {
+                sent = [];
+                _sentThisSessionByPeer[peerId] = sent;
+            }
+            sent.Add(sentMessage);
+            _thread = [.. _thread, sentMessage];
+            _draftText = string.Empty;
+        });
+    }
+}

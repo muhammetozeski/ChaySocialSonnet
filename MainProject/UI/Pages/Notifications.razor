@@ -1,0 +1,71 @@
+@attribute [Route("/notifications")]
+@inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+@inject NotificationsApiClient NotificationsApi
+<PageTitle>Notifications</PageTitle>
+
+<div class="notifications-screen">
+    @if (_notifications is null)
+    {
+        <div class="notifications-loading">
+            <CoreSpinner />
+        </div>
+    }
+    else if (_notifications.Count == 0)
+    {
+        <p class="notifications-empty">Nothing yet — likes, comments, and new followers will show up here.</p>
+    }
+    else
+    {
+        @foreach (Backend.NotificationResponse notification in _notifications)
+        {
+            <GlassCard CustomClass="notification-row">
+                <span class="notification-icon">@IconFor(notification.Kind)</span>
+                <p class="notification-text">@DescribeFor(notification)</p>
+                <p class="notification-time">@RelativeTimeFormatter.Format(notification.CreatedAt, DateTimeOffset.UtcNow)</p>
+            </GlassCard>
+        }
+    }
+</div>
+
+<NotificationsCss />
+
+@code {
+    const int MaxNotifications = 50;
+
+    IReadOnlyList<Backend.NotificationResponse>? _notifications;
+
+    protected override void OnInitialized()
+    {
+        RequireAuth = true;
+        base.OnInitialized();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.CurrentIdentity is null)
+        {
+            return;
+        }
+
+        _notifications = await NotificationsApi.GetForUserAsync(AuthService.CurrentIdentity.PublicId, MaxNotifications);
+        await NotificationsApi.MarkAllReadAsync(AuthService.CurrentIdentity.PublicId);
+    }
+
+    static string IconFor(Backend.NotificationKind kind) => kind switch
+    {
+        Backend.NotificationKind.Like => "❤️",
+        Backend.NotificationKind.Comment => "💬",
+        Backend.NotificationKind.Follow => "👤",
+        _ => "🔔"
+    };
+
+    static string ShortId(string publicId) => publicId[..Math.Min(8, publicId.Length)];
+
+    static string DescribeFor(Backend.NotificationResponse notification) => notification.Kind switch
+    {
+        Backend.NotificationKind.Like => $"{ShortId(notification.ActorPublicId)} liked your post",
+        Backend.NotificationKind.Comment => $"{ShortId(notification.ActorPublicId)} commented on your post",
+        Backend.NotificationKind.Follow => $"{ShortId(notification.ActorPublicId)} started following you",
+        _ => "Something happened"
+    };
+}

@@ -18,13 +18,13 @@
         margin: 0;
         font-size: @(AppMeasures.Font.Small)px;
         font-weight: @(AppMeasures.Weight.Semibold);
-        color: @AppColors.TextSecondary;
+        color: @(AppColors.TextSecondary.ToRgbaHex(true));
     }
 
     .post-card-text {
         margin: 0;
         font-size: @(AppMeasures.Font.Normal)px;
-        color: @AppColors.TextPrimary;
+        color: @(AppColors.TextPrimary.ToRgbaHex(true));
         line-height: @(AppMeasures.LineHeight.Snug);
         white-space: pre-wrap;
         word-break: break-word;
@@ -33,7 +33,7 @@
     .post-card-time {
         margin: 0;
         font-size: @(AppMeasures.Font.XSmall)px;
-        color: @AppColors.TextMuted;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
     }
 
     .post-card-actions {
@@ -50,7 +50,7 @@
         border: none;
         cursor: pointer;
         font-size: @(AppMeasures.Font.Small)px;
-        color: @AppColors.TextMuted;
+        color: @(AppColors.TextMuted.ToRgbaHex(true));
         padding: @(AppMeasures.Space.Px4)px @(AppMeasures.Space.Px8)px;
         border-radius: @(AppMeasures.Radius.Small)px;
     }
@@ -61,13 +61,13 @@
     }
 
     .post-card-action--active {
-        color: @AppColors.Error;
+        color: @(AppColors.Error.ToRgbaHex(true));
     }
 
     .post-card-report-sent {
         margin: 0;
         font-size: @(AppMeasures.Font.XSmall)px;
-        color: @AppColors.TextSuccess;
+        color: @(AppColors.TextSuccess.ToRgbaHex(true));
     }
 
     .post-card-comments {
@@ -87,12 +87,12 @@
 
     .post-card-comment-author {
         font-weight: @(AppMeasures.Weight.Semibold);
-        color: @AppColors.TextSecondary;
+        color: @(AppColors.TextSecondary.ToRgbaHex(true));
         flex-shrink: 0;
     }
 
     .post-card-comment-text {
-        color: @AppColors.TextPrimary;
+        color: @(AppColors.TextPrimary.ToRgbaHex(true));
         word-break: break-word;
     }
 
