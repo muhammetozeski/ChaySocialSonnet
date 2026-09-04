@@ -1,9 +1,21 @@
 @using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager NavManager
 
 <Router AppAssembly="@typeof(ChaySocialSonnet.MainProject.UI.Routes).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(ChaySocialSonnet.MainProject.UI.Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        <ErrorBoundary>
+            <ChildContent>
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(ChaySocialSonnet.MainProject.UI.Layout.MainLayout)" />
+                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            </ChildContent>
+            <ErrorContent>
+                <div class="route-error">
+                    <p class="route-error-title">Something went wrong</p>
+                    <p class="route-error-subtitle">This screen hit an unexpected error.</p>
+                    <button class="route-error-reload" @onclick="HandleReload">Reload</button>
+                </div>
+            </ErrorContent>
+        </ErrorBoundary>
     </Found>
     <NotFound>
         <PageTitle>Not found</PageTitle>
@@ -12,3 +24,10 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+<RoutesCss />
+
+@code {
+    /// <summary> A client-side NavigateTo would keep reusing the same (possibly still-broken) render tree — this needs a genuine full reload to get a fresh one. </summary>
+    void HandleReload() => NavManager.NavigateTo("/", forceLoad: true);
+}
