@@ -89,15 +89,22 @@
         }
 
         IReadOnlyList<Backend.EncryptedMessageResponse> inbox = await MessagesApi.GetInboxAsync(AuthService.CurrentIdentity.PublicId);
-        List<ChatMessage> received = inbox
-            .Where(message => message.SenderPublicId == _activePeerId)
-            .Select(message =>
+        var received = new List<ChatMessage>();
+        foreach (Backend.EncryptedMessageResponse message in inbox.Where(message => message.SenderPublicId == _activePeerId))
+        {
+            // One malformed/undecryptable message (tampered data, or sent under a since-rotated key) must
+            // not take the whole thread down with it — skip it and keep loading the rest.
+            try
             {
                 byte[] sharedSecret = Services.Identity.IdentityService.Decapsulate(AuthService.CurrentIdentity.EncryptionPrivateKey, Convert.FromBase64String(message.EncapsulatedKeyBase64));
                 string text = Services.Identity.IdentityService.DecryptMessage(sharedSecret, Convert.FromBase64String(message.CiphertextBase64));
-                return new ChatMessage(text, message.SentAt, IsMine: false);
-            })
-            .ToList();
+                received.Add(new ChatMessage(text, message.SentAt, IsMine: false));
+            }
+            catch (Exception exception) when (exception is FormatException or Org.BouncyCastle.Crypto.CryptoException)
+            {
+                Log(exception, LogLevel.Warning);
+            }
+        }
 
         List<ChatMessage> sentThisSession = _sentThisSessionByPeer.TryGetValue(_activePeerId, out List<ChatMessage>? sent) ? sent : [];
         _thread = [.. received, .. sentThisSession];
