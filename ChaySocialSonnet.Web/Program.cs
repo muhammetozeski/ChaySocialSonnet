@@ -57,7 +57,15 @@ namespace ChaySocialSonnet
                 app.UseHsts();
             }
 
-            app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+            // Scoped to non-API paths only: UseStatusCodePagesWithReExecute re-executes the pipeline against
+            // "/not-found" for any EMPTY-bodied error response (e.g. Results.Unauthorized(), Results.NotFound()),
+            // and that re-execution keeps the original HTTP method — so a POST hitting Results.Unauthorized()
+            // would re-execute "/not-found" as a POST too, which only Razor Components' GET/HEAD-only fallback
+            // page can answer, turning a clean 401 into a confusing 405. API responses should reach the caller
+            // as-is; only browser page navigation wants the friendly not-found page.
+            app.UseWhen(
+                context => !context.Request.Path.StartsWithSegments("/api"),
+                branch => branch.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
             app.UseHttpsRedirection();
 
             app.UseAntiforgery();
