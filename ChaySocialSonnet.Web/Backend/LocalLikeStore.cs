@@ -11,8 +11,16 @@ namespace ChaySocialSonnet.Web.Backend
         public Task<bool> ToggleLikeAsync(string postId, string likerPublicId)
         {
             ConcurrentDictionary<string, byte> likers = likersByPost.GetOrAdd(postId, static _ => new ConcurrentDictionary<string, byte>());
-            bool nowLiked = !likers.TryRemove(likerPublicId, out _) && likers.TryAdd(likerPublicId, 0);
-            return Task.FromResult(nowLiked);
+
+            // TryRemove-then-TryAdd is each individually atomic, but the PAIR isn't: two overlapping toggles
+            // from the same liker could both miss the TryRemove and then race on TryAdd, leaving the loser
+            // reporting the opposite of the state it actually caused. Locking on this post's own likers
+            // dictionary (never exposed outside this class) serializes toggles for that one post only.
+            lock (likers)
+            {
+                bool nowLiked = !likers.TryRemove(likerPublicId, out _) && likers.TryAdd(likerPublicId, 0);
+                return Task.FromResult(nowLiked);
+            }
         }
 
         public Task<int> GetLikeCountAsync(string postId) =>

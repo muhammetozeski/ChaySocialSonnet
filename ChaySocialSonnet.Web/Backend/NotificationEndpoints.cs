@@ -1,4 +1,5 @@
 using ChaySocialSonnet.MainProject.Backend;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ChaySocialSonnet.Web.Backend
 {
@@ -16,8 +17,13 @@ namespace ChaySocialSonnet.Web.Backend
             app.MapGet("/api/notifications/{publicId}/unread-count", async (string publicId, INotificationStore notifications) =>
                 Results.Ok(await notifications.GetUnreadCountAsync(publicId)));
 
-            app.MapPost("/api/notifications/{publicId}/mark-read", async (string publicId, INotificationStore notifications) =>
+            app.MapPost("/api/notifications/{publicId}/mark-read", async (string publicId, [FromHeader(Name = "Authorization")] string? authorization, INotificationStore notifications, IIdentityRegistry registry) =>
             {
+                string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
+                if (actingPublicId is null || actingPublicId != publicId)
+                {
+                    return Results.Unauthorized();
+                }
                 await notifications.MarkAllReadAsync(publicId);
                 return Results.Ok();
             });

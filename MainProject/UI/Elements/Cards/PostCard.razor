@@ -88,7 +88,7 @@
             return;
         }
 
-        ToggleLikeResponse result = await PostApi.ToggleLikeAsync(Post.Id, ViewerPublicId);
+        ToggleLikeResponse result = await PostApi.ToggleLikeAsync(Post.Id);
         _liked = result.Liked;
         _likeCount = result.LikeCount;
     }
@@ -109,7 +109,7 @@
             return;
         }
 
-        CommentResponse comment = await PostApi.AddCommentAsync(Post.Id, ViewerPublicId, _newCommentText);
+        CommentResponse comment = await PostApi.AddCommentAsync(Post.Id, _newCommentText);
         _comments = [.. _comments, comment];
         _commentCount++;
         _newCommentText = string.Empty;
@@ -122,7 +122,7 @@
             return;
         }
 
-        await PostApi.DeletePostAsync(Post.Id, ViewerPublicId);
+        await PostApi.DeletePostAsync(Post.Id);
         await OnDeleted.InvokeAsync(Post.Id);
     }
 
@@ -133,7 +133,7 @@
             return;
         }
 
-        await SafetyApi.SubmitReportAsync(ViewerPublicId, "post", Post.Id, "Reported from the feed");
+        await SafetyApi.SubmitReportAsync("post", Post.Id, "Reported from the feed");
         _reportSent = true;
     }
 }

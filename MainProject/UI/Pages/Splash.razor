@@ -24,10 +24,10 @@
             // is in-memory, so a server restart during development wipes every registration even though
             // the device still remembers its identity — without this check the app would silently show
             // a "signed in" UI for an identity the server has never heard of.
-            bool verified = await ApiClient.SignInAsync(savedIdentity);
-            if (verified)
+            string? sessionToken = await ApiClient.SignInAsync(savedIdentity);
+            if (sessionToken is not null)
             {
-                AuthService.SignIn(savedIdentity);
+                AuthService.SignIn(savedIdentity, sessionToken);
                 NavManager.NavigateTo("/home");
                 return;
             }

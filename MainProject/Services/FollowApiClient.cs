@@ -6,19 +6,17 @@ namespace ChaySocialSonnet.MainProject.Services
     /// <summary> Talks to the server's /api/follow/* endpoints. </summary>
     public sealed class FollowApiClient(HttpClient httpClient)
     {
-        public async Task<FollowStatusResponse> FollowAsync(string followerPublicId, string targetPublicId)
+        public async Task<FollowStatusResponse> FollowAsync(string targetPublicId)
         {
-            HttpResponseMessage response = await httpClient.PostAsJsonAsync($"/api/follow/{Uri.EscapeDataString(targetPublicId)}", new FollowRequest(followerPublicId));
+            HttpRequestMessage request = AuthorizedRequests.Create(HttpMethod.Post, $"/api/follow/{Uri.EscapeDataString(targetPublicId)}");
+            HttpResponseMessage response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
             return (await response.Content.ReadFromJsonAsync<FollowStatusResponse>())!;
         }
 
-        public async Task<FollowStatusResponse> UnfollowAsync(string followerPublicId, string targetPublicId)
+        public async Task<FollowStatusResponse> UnfollowAsync(string targetPublicId)
         {
-            HttpRequestMessage request = new(HttpMethod.Delete, $"/api/follow/{Uri.EscapeDataString(targetPublicId)}")
-            {
-                Content = JsonContent.Create(new FollowRequest(followerPublicId))
-            };
+            HttpRequestMessage request = AuthorizedRequests.Create(HttpMethod.Delete, $"/api/follow/{Uri.EscapeDataString(targetPublicId)}");
             HttpResponseMessage response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
             return (await response.Content.ReadFromJsonAsync<FollowStatusResponse>())!;

@@ -6,6 +6,9 @@ namespace ChaySocialSonnet.Web.Backend
     /// <summary> Maps the /api/posts/* endpoints backing <see cref="MainProject.Services.PostApiClient"/>. Public posts are stored and served in the clear (see <see cref="PublicPost"/>'s own summary for why). </summary>
     public static class PostEndpoints
     {
+        /// <summary> A post or comment beyond this length is rejected — plain abuse-resistance, not a design statement about ideal post length. </summary>
+        const int MaxTextLength = 2000;
+
         public static void MapPostEndpoints(this IEndpointRouteBuilder app)
         {
             app.MapGet("/api/posts/recent", async (int count, string? viewerPublicId, IPostStore posts, ILikeStore likes, ICommentStore comments, IBlockStore blocks) =>
@@ -20,23 +23,46 @@ namespace ChaySocialSonnet.Web.Backend
                 return Results.Ok(await ToSummariesAsync(visible, viewerPublicId, likes, comments));
             });
 
-            app.MapPost("/api/posts", async (CreatePostRequest request, IPostStore posts) =>
+            app.MapPost("/api/posts", async (CreatePostRequest request, IPostStore posts, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
-                PublicPost post = await posts.CreatePostAsync(request.AuthorPublicId, request.Text);
+                string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
+                if (actingPublicId is null)
+                {
+                    return Results.Unauthorized();
+                }
+                if (!IsValidText(request.Text))
+                {
+                    return Results.BadRequest("text must be non-empty and at most " + MaxTextLength + " characters.");
+                }
+
+                PublicPost post = await posts.CreatePostAsync(actingPublicId, request.Text);
                 return Results.Ok(new PostSummary(post.Id, post.AuthorPublicId, post.Text, post.CreatedAt, LikeCount: 0, CommentCount: 0, LikedByViewer: false));
             });
 
-            app.MapDelete("/api/posts/{postId}", async (string postId, [FromBody] DeletePostRequest request, IPostStore posts) =>
-                await posts.DeletePostAsync(postId, request.RequestingPublicId) ? Results.Ok() : Results.NotFound());
-
-            app.MapPost("/api/posts/{postId}/like", async (string postId, ToggleLikeRequest request, ILikeStore likes, IPostStore posts, INotificationStore notifications) =>
+            app.MapDelete("/api/posts/{postId}", async (string postId, IPostStore posts, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
-                bool liked = await likes.ToggleLikeAsync(postId, request.LikerPublicId);
+                string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
+                if (actingPublicId is null)
+                {
+                    return Results.Unauthorized();
+                }
+                return await posts.DeletePostAsync(postId, actingPublicId) ? Results.Ok() : Results.NotFound();
+            });
+
+            app.MapPost("/api/posts/{postId}/like", async (string postId, ILikeStore likes, IPostStore posts, INotificationStore notifications, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
+            {
+                string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
+                if (actingPublicId is null)
+                {
+                    return Results.Unauthorized();
+                }
+
+                bool liked = await likes.ToggleLikeAsync(postId, actingPublicId);
                 int count = await likes.GetLikeCountAsync(postId);
 
                 if (liked)
                 {
-                    await NotifyPostAuthorAsync(postId, request.LikerPublicId, NotificationKind.Like, posts, notifications);
+                    await NotifyPostAuthorAsync(postId, actingPublicId, NotificationKind.Like, posts, notifications);
                 }
 
                 return Results.Ok(new ToggleLikeResponse(liked, count));
@@ -62,13 +88,25 @@ namespace ChaySocialSonnet.Web.Backend
                 return Results.Ok(postComments.Select(comment => new CommentResponse(comment.Id, comment.AuthorPublicId, comment.Text, comment.CreatedAt)));
             });
 
-            app.MapPost("/api/posts/{postId}/comments", async (string postId, AddCommentRequest request, ICommentStore comments, IPostStore posts, INotificationStore notifications) =>
+            app.MapPost("/api/posts/{postId}/comments", async (string postId, AddCommentRequest request, ICommentStore comments, IPostStore posts, INotificationStore notifications, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
-                PostComment comment = await comments.AddCommentAsync(postId, request.AuthorPublicId, request.Text);
-                await NotifyPostAuthorAsync(postId, request.AuthorPublicId, NotificationKind.Comment, posts, notifications);
+                string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
+                if (actingPublicId is null)
+                {
+                    return Results.Unauthorized();
+                }
+                if (!IsValidText(request.Text))
+                {
+                    return Results.BadRequest("text must be non-empty and at most " + MaxTextLength + " characters.");
+                }
+
+                PostComment comment = await comments.AddCommentAsync(postId, actingPublicId, request.Text);
+                await NotifyPostAuthorAsync(postId, actingPublicId, NotificationKind.Comment, posts, notifications);
                 return Results.Ok(new CommentResponse(comment.Id, comment.AuthorPublicId, comment.Text, comment.CreatedAt));
             });
         }
+
+        static bool IsValidText(string text) => !string.IsNullOrWhiteSpace(text) && text.Length <= MaxTextLength;
 
         static async Task NotifyPostAuthorAsync(string postId, string actorPublicId, NotificationKind kind, IPostStore posts, INotificationStore notifications)
         {

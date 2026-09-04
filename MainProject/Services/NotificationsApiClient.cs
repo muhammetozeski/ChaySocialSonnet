@@ -17,7 +17,8 @@ namespace ChaySocialSonnet.MainProject.Services
 
         public async Task MarkAllReadAsync(string publicId)
         {
-            HttpResponseMessage response = await httpClient.PostAsync($"/api/notifications/{Uri.EscapeDataString(publicId)}/mark-read", content: null);
+            HttpRequestMessage request = AuthorizedRequests.Create(HttpMethod.Post, $"/api/notifications/{Uri.EscapeDataString(publicId)}/mark-read");
+            HttpResponseMessage response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
         }
     }

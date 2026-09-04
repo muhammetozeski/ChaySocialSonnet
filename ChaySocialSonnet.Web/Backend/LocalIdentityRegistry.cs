@@ -13,6 +13,7 @@ namespace ChaySocialSonnet.Web.Backend
     public sealed class LocalIdentityRegistry : IIdentityRegistry
     {
         const int ChallengeNonceLengthBytes = 32;
+        const int SessionTokenLengthBytes = 32;
         static readonly TimeSpan ChallengeLifetime = TimeSpan.FromMinutes(5);
 
         sealed record RegisteredIdentity(byte[] SigningPublicKey, byte[] EncryptionPublicKey, string DisplayName);
@@ -20,6 +21,9 @@ namespace ChaySocialSonnet.Web.Backend
 
         readonly ConcurrentDictionary<string, RegisteredIdentity> identities = new();
         readonly ConcurrentDictionary<string, PendingChallenge> pendingChallenges = new();
+
+        /// <summary> Session token -> the public id it proves control of. Issued by <see cref="VerifyChallengeAsync"/>, consulted by <see cref="ResolveSessionAsync"/>. Lost on restart like everything else here. </summary>
+        readonly ConcurrentDictionary<string, string> sessions = new();
 
         public Task<RegisterIdentityResult> RegisterAsync(string publicId, byte[] signingPublicKey, byte[] encryptionPublicKey, string displayName)
         {
@@ -72,7 +76,7 @@ namespace ChaySocialSonnet.Web.Backend
             return Task.FromResult(nonce);
         }
 
-        public Task<bool> VerifyChallengeAsync(string publicId, string challenge, byte[] signature)
+        public Task<string?> VerifyChallengeAsync(string publicId, string challenge, byte[] signature)
         {
             bool challengeStillValid = pendingChallenges.TryRemove(publicId, out PendingChallenge? pending)
                 && pending.ExpiresAt >= DateTimeOffset.UtcNow
@@ -80,11 +84,21 @@ namespace ChaySocialSonnet.Web.Backend
 
             if (!challengeStillValid || !identities.TryGetValue(publicId, out RegisteredIdentity? identity))
             {
-                return Task.FromResult(false);
+                return Task.FromResult<string?>(null);
             }
 
             byte[] challengeBytes = Convert.FromBase64String(challenge);
-            return Task.FromResult(IdentityService.Verify(identity.SigningPublicKey, challengeBytes, signature));
+            if (!IdentityService.Verify(identity.SigningPublicKey, challengeBytes, signature))
+            {
+                return Task.FromResult<string?>(null);
+            }
+
+            string token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(SessionTokenLengthBytes));
+            sessions[token] = publicId;
+            return Task.FromResult<string?>(token);
         }
+
+        public Task<string?> ResolveSessionAsync(string sessionToken) =>
+            Task.FromResult(sessions.TryGetValue(sessionToken, out string? publicId) ? publicId : null);
     }
 }

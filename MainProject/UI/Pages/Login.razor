@@ -76,14 +76,14 @@
         await _signingIn.RunAsync(async () =>
         {
             await ApiClient.RegisterAsync(_identity!, AppConstants.GuestDisplayName);
-            bool verified = await ApiClient.SignInAsync(_identity!);
-            if (!verified)
+            string? sessionToken = await ApiClient.SignInAsync(_identity!);
+            if (sessionToken is null)
             {
                 throw new InvalidOperationException("Could not verify your identity with the server. Please try again.");
             }
 
             await KeyStore.SaveAsync(_identity!);
-            AuthService.SignIn(_identity!);
+            AuthService.SignIn(_identity!, sessionToken);
             NavManager.NavigateTo("/home");
         });
     }

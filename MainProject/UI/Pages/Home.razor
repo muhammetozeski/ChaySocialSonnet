@@ -128,7 +128,7 @@
 
         await _posting.RunAsync(async () =>
         {
-            PostSummary created = await PostApi.CreatePostAsync(ViewerPublicId, _draftText);
+            PostSummary created = await PostApi.CreatePostAsync(_draftText);
             _draftText = string.Empty;
             _posts = [created, .. _posts ?? []];
         });

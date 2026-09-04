@@ -1,6 +1,5 @@
 namespace ChaySocialSonnet.MainProject.Backend
 {
-    public sealed record BlockRequest(string BlockerPublicId);
-
-    public sealed record SubmitReportRequest(string ReporterPublicId, string TargetType, string TargetId, string Reason);
+    /// <summary> The reporter is the caller resolved server-side from their session token — never a field in this request. </summary>
+    public sealed record SubmitReportRequest(string TargetType, string TargetId, string Reason);
 }

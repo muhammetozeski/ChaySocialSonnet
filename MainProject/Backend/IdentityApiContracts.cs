@@ -9,5 +9,6 @@ namespace ChaySocialSonnet.MainProject.Backend
 
     public sealed record VerifyChallengeRequest(string PublicId, string Challenge, string SignatureBase64);
 
-    public sealed record VerifyChallengeResponse(bool Success);
+    /// <summary> <see cref="SessionToken"/> is null when <see cref="Success"/> is false; otherwise it proves control of the identity for subsequent mutating requests (send it as an "Authorization: Bearer" header). </summary>
+    public sealed record VerifyChallengeResponse(bool Success, string? SessionToken);
 }

@@ -15,9 +15,9 @@ namespace ChaySocialSonnet.MainProject.Tests.Backend
 
             var challenge = await registry.IssueChallengeAsync(identity.PublicId);
             var signature = IdentityService.Sign(identity.SigningPrivateKey, Convert.FromBase64String(challenge));
-            var isValid = await registry.VerifyChallengeAsync(identity.PublicId, challenge, signature);
+            var sessionToken = await registry.VerifyChallengeAsync(identity.PublicId, challenge, signature);
 
-            Assert.True(isValid);
+            Assert.NotNull(sessionToken);
         }
 
         [Fact]
@@ -32,8 +32,8 @@ namespace ChaySocialSonnet.MainProject.Tests.Backend
             var firstAttempt = await registry.VerifyChallengeAsync(identity.PublicId, challenge, signature);
             var replayAttempt = await registry.VerifyChallengeAsync(identity.PublicId, challenge, signature);
 
-            Assert.True(firstAttempt);
-            Assert.False(replayAttempt);
+            Assert.NotNull(firstAttempt);
+            Assert.Null(replayAttempt);
         }
 
         [Fact]
@@ -46,9 +46,9 @@ namespace ChaySocialSonnet.MainProject.Tests.Backend
             var challenge = await registry.IssueChallengeAsync(identity.PublicId);
             var impostorSignature = IdentityService.Sign(impostor.SigningPrivateKey, Convert.FromBase64String(challenge));
 
-            var isValid = await registry.VerifyChallengeAsync(identity.PublicId, challenge, impostorSignature);
+            var sessionToken = await registry.VerifyChallengeAsync(identity.PublicId, challenge, impostorSignature);
 
-            Assert.False(isValid);
+            Assert.Null(sessionToken);
         }
 
         [Fact]
@@ -56,9 +56,34 @@ namespace ChaySocialSonnet.MainProject.Tests.Backend
         {
             var registry = new LocalIdentityRegistry();
 
-            var isValid = await registry.VerifyChallengeAsync("never-registered", "irrelevant", [1, 2, 3]);
+            var sessionToken = await registry.VerifyChallengeAsync("never-registered", "irrelevant", [1, 2, 3]);
 
-            Assert.False(isValid);
+            Assert.Null(sessionToken);
+        }
+
+        [Fact]
+        public async Task ResolveSessionAsync_AfterSuccessfulVerify_ReturnsThatIdentitysPublicId()
+        {
+            var registry = new LocalIdentityRegistry();
+            var identity = IdentityService.GenerateIdentity();
+            await registry.RegisterAsync(identity.PublicId, identity.SigningPublicKey, identity.EncryptionPublicKey, "Test User");
+            var challenge = await registry.IssueChallengeAsync(identity.PublicId);
+            var signature = IdentityService.Sign(identity.SigningPrivateKey, Convert.FromBase64String(challenge));
+            var sessionToken = await registry.VerifyChallengeAsync(identity.PublicId, challenge, signature);
+
+            var resolved = await registry.ResolveSessionAsync(sessionToken!);
+
+            Assert.Equal(identity.PublicId, resolved);
+        }
+
+        [Fact]
+        public async Task ResolveSessionAsync_WithUnknownToken_ReturnsNull()
+        {
+            var registry = new LocalIdentityRegistry();
+
+            var resolved = await registry.ResolveSessionAsync("not-a-real-token");
+
+            Assert.Null(resolved);
         }
 
         [Fact]

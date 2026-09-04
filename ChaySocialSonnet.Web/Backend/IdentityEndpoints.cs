@@ -41,8 +41,8 @@ namespace ChaySocialSonnet.Web.Backend
                     return Results.BadRequest("signatureBase64 is not valid Base64.");
                 }
 
-                bool success = await registry.VerifyChallengeAsync(request.PublicId, request.Challenge, signature);
-                return Results.Ok(new VerifyChallengeResponse(success));
+                string? sessionToken = await registry.VerifyChallengeAsync(request.PublicId, request.Challenge, signature);
+                return Results.Ok(new VerifyChallengeResponse(sessionToken is not null, sessionToken));
             });
 
             app.MapGet("/api/identity/{publicId}", async (string publicId, IIdentityRegistry registry) =>

@@ -111,8 +111,8 @@
         }
 
         _followStatus = _followStatus.IsFollowing
-            ? await FollowApi.UnfollowAsync(ViewerPublicId, PublicId)
-            : await FollowApi.FollowAsync(ViewerPublicId, PublicId);
+            ? await FollowApi.UnfollowAsync(PublicId)
+            : await FollowApi.FollowAsync(PublicId);
     }
 
     async Task HandleBlock()
@@ -122,7 +122,7 @@
             return;
         }
 
-        await SafetyApi.BlockAsync(ViewerPublicId, PublicId);
+        await SafetyApi.BlockAsync(PublicId);
         _blocked = true;
     }
 
@@ -133,7 +133,7 @@
             return;
         }
 
-        await SafetyApi.UnblockAsync(ViewerPublicId, PublicId);
+        await SafetyApi.UnblockAsync(PublicId);
         _blocked = false;
     }
 
@@ -144,7 +144,7 @@
             return;
         }
 
-        await SafetyApi.SubmitReportAsync(ViewerPublicId, "user", PublicId, "Reported from profile");
+        await SafetyApi.SubmitReportAsync("user", PublicId, "Reported from profile");
         _reportSent = true;
     }
 

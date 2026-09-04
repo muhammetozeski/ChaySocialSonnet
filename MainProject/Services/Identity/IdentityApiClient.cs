@@ -23,8 +23,12 @@ namespace ChaySocialSonnet.MainProject.Services.Identity
             response.EnsureSuccessStatusCode();
         }
 
-        /// <summary> Runs the full challenge-response round trip: requests a nonce, signs it locally with the private key, and asks the server to verify the signature. Returns whether the server accepted it. </summary>
-        public async Task<bool> SignInAsync(ChayIdentity identity)
+        /// <summary>
+        /// Runs the full challenge-response round trip: requests a nonce, signs it locally with the private
+        /// key, and asks the server to verify the signature. Returns the session token proving control of
+        /// this identity (pass it to <c>AuthService.SignIn</c>), or null if the server rejected it.
+        /// </summary>
+        public async Task<string?> SignInAsync(ChayIdentity identity)
         {
             HttpResponseMessage challengeHttpResponse = await httpClient.PostAsJsonAsync("/api/identity/challenge", new IssueChallengeRequest(identity.PublicId));
             challengeHttpResponse.EnsureSuccessStatusCode();
@@ -38,7 +42,7 @@ namespace ChaySocialSonnet.MainProject.Services.Identity
             verifyHttpResponse.EnsureSuccessStatusCode();
             VerifyChallengeResponse verifyResponse = (await verifyHttpResponse.Content.ReadFromJsonAsync<VerifyChallengeResponse>())!;
 
-            return verifyResponse.Success;
+            return verifyResponse.Success ? verifyResponse.SessionToken : null;
         }
 
         /// <summary> Looks up the display name for a public id, or null if nobody registered under it. </summary>

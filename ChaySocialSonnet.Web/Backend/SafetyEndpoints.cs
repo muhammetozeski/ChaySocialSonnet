@@ -8,24 +8,39 @@ namespace ChaySocialSonnet.Web.Backend
     {
         public static void MapSafetyEndpoints(this IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/block/{blockedPublicId}", async (string blockedPublicId, BlockRequest request, IBlockStore blocks) =>
+            app.MapPost("/api/block/{blockedPublicId}", async (string blockedPublicId, IBlockStore blocks, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
-                await blocks.BlockAsync(request.BlockerPublicId, blockedPublicId);
+                string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
+                if (actingPublicId is null)
+                {
+                    return Results.Unauthorized();
+                }
+                await blocks.BlockAsync(actingPublicId, blockedPublicId);
                 return Results.Ok();
             });
 
-            app.MapDelete("/api/block/{blockedPublicId}", async (string blockedPublicId, [FromBody] BlockRequest request, IBlockStore blocks) =>
+            app.MapDelete("/api/block/{blockedPublicId}", async (string blockedPublicId, IBlockStore blocks, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
-                await blocks.UnblockAsync(request.BlockerPublicId, blockedPublicId);
+                string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
+                if (actingPublicId is null)
+                {
+                    return Results.Unauthorized();
+                }
+                await blocks.UnblockAsync(actingPublicId, blockedPublicId);
                 return Results.Ok();
             });
 
             app.MapGet("/api/block/{blockedPublicId}/status", async (string blockedPublicId, string blockerPublicId, IBlockStore blocks) =>
                 Results.Ok(await blocks.IsBlockedAsync(blockerPublicId, blockedPublicId)));
 
-            app.MapPost("/api/report", async (SubmitReportRequest request, IReportStore reports) =>
+            app.MapPost("/api/report", async (SubmitReportRequest request, IReportStore reports, [FromHeader(Name = "Authorization")] string? authorization, IIdentityRegistry registry) =>
             {
-                await reports.SubmitAsync(request.ReporterPublicId, request.TargetType, request.TargetId, request.Reason);
+                string? actingPublicId = await RequestAuthentication.ResolveActingPublicIdAsync(authorization, registry);
+                if (actingPublicId is null)
+                {
+                    return Results.Unauthorized();
+                }
+                await reports.SubmitAsync(actingPublicId, request.TargetType, request.TargetId, request.Reason);
                 return Results.Ok();
             });
         }

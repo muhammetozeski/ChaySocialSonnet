@@ -22,26 +22,26 @@ namespace ChaySocialSonnet.MainProject.Services
             return posts ?? [];
         }
 
-        public async Task<PostSummary> CreatePostAsync(string authorPublicId, string text)
+        /// <summary> Creates a post as the current session's identity (see <see cref="AuthService.SessionToken"/>) — there is no "post as someone else" option. </summary>
+        public async Task<PostSummary> CreatePostAsync(string text)
         {
-            HttpResponseMessage response = await httpClient.PostAsJsonAsync("/api/posts", new CreatePostRequest(authorPublicId, text));
+            HttpRequestMessage request = AuthorizedRequests.Create(HttpMethod.Post, "/api/posts", new CreatePostRequest(text));
+            HttpResponseMessage response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
             return (await response.Content.ReadFromJsonAsync<PostSummary>())!;
         }
 
-        public async Task DeletePostAsync(string postId, string requestingPublicId)
+        public async Task DeletePostAsync(string postId)
         {
-            HttpRequestMessage request = new(HttpMethod.Delete, $"/api/posts/{Uri.EscapeDataString(postId)}")
-            {
-                Content = JsonContent.Create(new DeletePostRequest(requestingPublicId))
-            };
+            HttpRequestMessage request = AuthorizedRequests.Create(HttpMethod.Delete, $"/api/posts/{Uri.EscapeDataString(postId)}");
             HttpResponseMessage response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task<ToggleLikeResponse> ToggleLikeAsync(string postId, string likerPublicId)
+        public async Task<ToggleLikeResponse> ToggleLikeAsync(string postId)
         {
-            HttpResponseMessage response = await httpClient.PostAsJsonAsync($"/api/posts/{Uri.EscapeDataString(postId)}/like", new ToggleLikeRequest(likerPublicId));
+            HttpRequestMessage request = AuthorizedRequests.Create(HttpMethod.Post, $"/api/posts/{Uri.EscapeDataString(postId)}/like");
+            HttpResponseMessage response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
             return (await response.Content.ReadFromJsonAsync<ToggleLikeResponse>())!;
         }
@@ -53,9 +53,10 @@ namespace ChaySocialSonnet.MainProject.Services
             return comments ?? [];
         }
 
-        public async Task<CommentResponse> AddCommentAsync(string postId, string authorPublicId, string text)
+        public async Task<CommentResponse> AddCommentAsync(string postId, string text)
         {
-            HttpResponseMessage response = await httpClient.PostAsJsonAsync($"/api/posts/{Uri.EscapeDataString(postId)}/comments", new AddCommentRequest(authorPublicId, text));
+            HttpRequestMessage request = AuthorizedRequests.Create(HttpMethod.Post, $"/api/posts/{Uri.EscapeDataString(postId)}/comments", new AddCommentRequest(text));
+            HttpResponseMessage response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
             return (await response.Content.ReadFromJsonAsync<CommentResponse>())!;
         }

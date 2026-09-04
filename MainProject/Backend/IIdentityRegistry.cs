@@ -47,7 +47,16 @@ namespace ChaySocialSonnet.MainProject.Backend
         /// <summary> Issues a fresh, single-use challenge nonce for <paramref name="publicId"/> to sign as proof of holding the matching private key. </summary>
         Task<string> IssueChallengeAsync(string publicId);
 
-        /// <summary> Verifies a signature over a previously issued challenge. The challenge is consumed (single-use) whether verification succeeds or fails, so it can never be replayed. </summary>
-        Task<bool> VerifyChallengeAsync(string publicId, string challenge, byte[] signature);
+        /// <summary>
+        /// Verifies a signature over a previously issued challenge. The challenge is consumed (single-use)
+        /// whether verification succeeds or fails, so it can never be replayed. On success, returns an
+        /// opaque session token proving control of <paramref name="publicId"/> for later requests — every
+        /// mutating endpoint must resolve the acting identity via <see cref="ResolveSessionAsync"/> using
+        /// this token, never trust a client-supplied public id field. Null on failure.
+        /// </summary>
+        Task<string?> VerifyChallengeAsync(string publicId, string challenge, byte[] signature);
+
+        /// <summary> Resolves a session token from <see cref="VerifyChallengeAsync"/> back to the public id that owns it, or null if the token is unknown/invalid. </summary>
+        Task<string?> ResolveSessionAsync(string sessionToken);
     }
 }
