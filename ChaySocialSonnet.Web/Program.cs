@@ -32,6 +32,12 @@ namespace ChaySocialSonnet
             builder.Services.AddSingleton<IIdentityRegistry, LocalIdentityRegistry>();
             builder.Services.AddSingleton<IPostStore, LocalPostStore>();
             builder.Services.AddSingleton<IMessageRelay, LocalMessageRelay>();
+            builder.Services.AddSingleton<ILikeStore, LocalLikeStore>();
+            builder.Services.AddSingleton<ICommentStore, LocalCommentStore>();
+            builder.Services.AddSingleton<IFollowStore, LocalFollowStore>();
+            builder.Services.AddSingleton<INotificationStore, LocalNotificationStore>();
+            builder.Services.AddSingleton<IBlockStore, LocalBlockStore>();
+            builder.Services.AddSingleton<IReportStore, LocalReportStore>();
 
             // The server never touches on-device storage — see HostRenderMode.Interactive above for why
             // this component tree does not even statically prerender.
@@ -59,6 +65,9 @@ namespace ChaySocialSonnet
             app.MapIdentityEndpoints();
             app.MapPostEndpoints();
             app.MapMessagesEndpoints();
+            app.MapFollowEndpoints();
+            app.MapNotificationEndpoints();
+            app.MapSafetyEndpoints();
 
             app.MapStaticAssets();
             app.MapRazorComponents<App>()

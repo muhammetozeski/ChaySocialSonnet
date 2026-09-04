@@ -40,5 +40,22 @@ namespace ChaySocialSonnet.MainProject.Services.Identity
 
             return verifyResponse.Success;
         }
+
+        /// <summary> Looks up the display name for a public id, or null if nobody registered under it. </summary>
+        public async Task<IdentitySummary?> GetSummaryAsync(string publicId)
+        {
+            HttpResponseMessage response = await httpClient.GetAsync($"/api/identity/{Uri.EscapeDataString(publicId)}");
+            return response.StatusCode == System.Net.HttpStatusCode.NotFound
+                ? null
+                : await response.Content.ReadFromJsonAsync<IdentitySummary>();
+        }
+
+        /// <summary> Finds registered identities whose public id or display name starts with <paramref name="query"/>. </summary>
+        public async Task<IReadOnlyList<IdentitySummary>> SearchAsync(string query, int count)
+        {
+            List<IdentitySummary>? results = await httpClient.GetFromJsonAsync<List<IdentitySummary>>(
+                $"/api/identity/search?query={Uri.EscapeDataString(query)}&count={count}");
+            return results ?? [];
+        }
     }
 }

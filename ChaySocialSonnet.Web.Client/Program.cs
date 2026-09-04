@@ -23,6 +23,9 @@ namespace ChaySocialSonnet.Web.Client
             builder.Services.AddScoped<IdentityApiClient>();
             builder.Services.AddScoped<PostApiClient>();
             builder.Services.AddScoped<MessagesApiClient>();
+            builder.Services.AddScoped<FollowApiClient>();
+            builder.Services.AddScoped<NotificationsApiClient>();
+            builder.Services.AddScoped<SafetyApiClient>();
 
             await builder.Build().RunAsync();
         }

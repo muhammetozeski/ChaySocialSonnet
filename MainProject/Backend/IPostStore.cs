@@ -19,5 +19,14 @@ namespace ChaySocialSonnet.MainProject.Backend
 
         /// <summary> Returns the most recent <paramref name="count"/> public posts, newest first. </summary>
         Task<IReadOnlyList<PublicPost>> GetRecentPostsAsync(int count);
+
+        /// <summary> Looks up a single post by id, or null if it doesn't exist (or was deleted). </summary>
+        Task<PublicPost?> GetByIdAsync(string postId);
+
+        /// <summary> Returns the most recent <paramref name="count"/> posts by <paramref name="authorPublicId"/>, newest first. </summary>
+        Task<IReadOnlyList<PublicPost>> GetPostsByAuthorAsync(string authorPublicId, int count);
+
+        /// <summary> Deletes <paramref name="postId"/> if it exists and was authored by <paramref name="requestingPublicId"/>. Returns whether it was deleted. </summary>
+        Task<bool> DeletePostAsync(string postId, string requestingPublicId);
     }
 }

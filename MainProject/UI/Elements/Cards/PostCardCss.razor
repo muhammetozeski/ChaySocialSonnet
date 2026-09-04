@@ -7,6 +7,13 @@
         text-align: left;
     }
 
+    .post-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: @(AppMeasures.Space.Small)px;
+    }
+
     .post-card-author {
         margin: 0;
         font-size: @(AppMeasures.Font.Small)px;
@@ -27,5 +34,76 @@
         margin: 0;
         font-size: @(AppMeasures.Font.XSmall)px;
         color: @AppColors.TextMuted;
+    }
+
+    .post-card-actions {
+        display: flex;
+        gap: @(AppMeasures.Space.Medium)px;
+        margin-top: @(AppMeasures.Space.Px4)px;
+    }
+
+    .post-card-action {
+        display: flex;
+        align-items: center;
+        gap: @(AppMeasures.Space.Px4)px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: @(AppMeasures.Font.Small)px;
+        color: @AppColors.TextMuted;
+        padding: @(AppMeasures.Space.Px4)px @(AppMeasures.Space.Px8)px;
+        border-radius: @(AppMeasures.Radius.Small)px;
+    }
+
+    .post-card-action:disabled {
+        opacity: @AppMeasures.Opacity.Disabled;
+        cursor: not-allowed;
+    }
+
+    .post-card-action--active {
+        color: @AppColors.Error;
+    }
+
+    .post-card-report-sent {
+        margin: 0;
+        font-size: @(AppMeasures.Font.XSmall)px;
+        color: @AppColors.TextSuccess;
+    }
+
+    .post-card-comments {
+        display: flex;
+        flex-direction: column;
+        gap: @(AppMeasures.Space.Small)px;
+        margin-top: @(AppMeasures.Space.Small)px;
+        padding-top: @(AppMeasures.Space.Small)px;
+        border-top: 1px solid @(AppColors.GlassBorderDefault.ToRgbaHex(true));
+    }
+
+    .post-card-comment {
+        display: flex;
+        gap: @(AppMeasures.Space.Px8)px;
+        font-size: @(AppMeasures.Font.Small)px;
+    }
+
+    .post-card-comment-author {
+        font-weight: @(AppMeasures.Weight.Semibold);
+        color: @AppColors.TextSecondary;
+        flex-shrink: 0;
+    }
+
+    .post-card-comment-text {
+        color: @AppColors.TextPrimary;
+        word-break: break-word;
+    }
+
+    .post-card-comment-composer {
+        display: flex;
+        align-items: center;
+        gap: @(AppMeasures.Space.Px8)px;
+        margin-top: @(AppMeasures.Space.Px4)px;
+    }
+
+    .post-card-comment-composer .core-input-group {
+        flex: 1;
     }
 </style>

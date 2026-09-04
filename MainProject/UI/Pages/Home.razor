@@ -12,6 +12,28 @@
                 <p class="home-hero-subtitle">So glad you're here — your feed will start filling up soon.</p>
             </GradientCard>
         </Hero>
+        <Intro>
+            @if (ViewerPublicId is not null)
+            {
+                <GlassCard CustomClass="home-composer">
+                    <CoreInput Placeholder="What's on your mind?" @bind-Value="_draftText" />
+                    <PrimaryButton Disabled="@_posting.IsBusy" OnClick="HandlePost">
+                        @if (_posting.IsBusy)
+                        {
+                            <CoreSpinner SizePx="@AppMeasures.Size.Px20" Color="@AppColors.TextOnAccent" />
+                        }
+                        else
+                        {
+                            <span>Post</span>
+                        }
+                    </PrimaryButton>
+                </GlassCard>
+                @if (_posting.ErrorMessage is not null)
+                {
+                    <p class="home-composer-error">@_posting.ErrorMessage</p>
+                }
+            }
+        </Intro>
         <Feed>
             @if (_posts is null)
             {
@@ -25,9 +47,9 @@
             }
             else
             {
-                @foreach (PublicPost post in _posts)
+                @foreach (PostSummary post in _posts)
                 {
-                    <PostCard Post="post" />
+                    <PostCard Post="post" ViewerPublicId="@ViewerPublicId" OnDeleted="HandlePostDeleted" />
                 }
             }
         </Feed>
@@ -39,10 +61,36 @@
 @code {
     const int RecentPostsCount = 20;
 
-    IReadOnlyList<PublicPost>? _posts;
+    IReadOnlyList<PostSummary>? _posts;
+    AsyncOperationState _posting = null!;
+    string _draftText = string.Empty;
+
+    string? ViewerPublicId => AuthService.CurrentIdentity?.PublicId;
 
     protected override async Task OnInitializedAsync()
     {
-        _posts = await PostApi.GetRecentPostsAsync(RecentPostsCount);
+        _posting = new AsyncOperationState(StateHasChanged);
+        _posts = await PostApi.GetRecentPostsAsync(RecentPostsCount, ViewerPublicId);
+    }
+
+    async Task HandlePost()
+    {
+        if (string.IsNullOrWhiteSpace(_draftText) || ViewerPublicId is null)
+        {
+            return;
+        }
+
+        await _posting.RunAsync(async () =>
+        {
+            PostSummary created = await PostApi.CreatePostAsync(ViewerPublicId, _draftText);
+            _draftText = string.Empty;
+            _posts = [created, .. _posts ?? []];
+        });
+    }
+
+    void HandlePostDeleted(string postId)
+    {
+        _posts = _posts?.Where(post => post.Id != postId).ToList();
+        StateHasChanged();
     }
 }

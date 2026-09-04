@@ -40,6 +40,15 @@ namespace ChaySocialSonnet.Web.Backend
                 bool success = await registry.VerifyChallengeAsync(request.PublicId, request.Challenge, signature);
                 return Results.Ok(new VerifyChallengeResponse(success));
             });
+
+            app.MapGet("/api/identity/{publicId}", async (string publicId, IIdentityRegistry registry) =>
+            {
+                IdentitySummary? summary = await registry.GetSummaryAsync(publicId);
+                return summary is null ? Results.NotFound() : Results.Ok(summary);
+            });
+
+            app.MapGet("/api/identity/search", async (string query, int count, IIdentityRegistry registry) =>
+                Results.Ok(await registry.SearchAsync(query, count)));
         }
     }
 }

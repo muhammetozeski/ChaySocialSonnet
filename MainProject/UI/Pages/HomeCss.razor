@@ -42,4 +42,20 @@
         color: @AppColors.TextMuted;
         font-size: @(AppMeasures.Font.Normal)px;
     }
+
+    .home-composer {
+        display: flex;
+        align-items: center;
+        gap: @(AppMeasures.Space.Small)px;
+    }
+
+    .home-composer .core-input-group {
+        flex: 1;
+    }
+
+    .home-composer-error {
+        margin: @(AppMeasures.Space.Px4)px 0 0;
+        font-size: @(AppMeasures.Font.Small)px;
+        color: @AppColors.TextDanger;
+    }
 </style>

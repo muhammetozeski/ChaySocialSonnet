@@ -27,5 +27,26 @@ namespace ChaySocialSonnet.Web.Backend
                 .ToList();
             return Task.FromResult(recentPosts);
         }
+
+        public Task<PublicPost?> GetByIdAsync(string postId) =>
+            Task.FromResult(posts.TryGetValue(postId, out PublicPost? post) ? post : null);
+
+        public Task<IReadOnlyList<PublicPost>> GetPostsByAuthorAsync(string authorPublicId, int count)
+        {
+            IReadOnlyList<PublicPost> authorPosts = posts.Values
+                .Where(post => post.AuthorPublicId == authorPublicId)
+                .OrderByDescending(post => post.CreatedAt)
+                .Take(count)
+                .ToList();
+            return Task.FromResult(authorPosts);
+        }
+
+        public Task<bool> DeletePostAsync(string postId, string requestingPublicId)
+        {
+            bool deleted = posts.TryGetValue(postId, out PublicPost? post)
+                && post.AuthorPublicId == requestingPublicId
+                && posts.TryRemove(postId, out _);
+            return Task.FromResult(deleted);
+        }
     }
 }

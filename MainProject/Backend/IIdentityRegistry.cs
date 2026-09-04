@@ -7,10 +7,19 @@ namespace ChaySocialSonnet.MainProject.Backend
     /// locally for now (<c>ChaySocialSonnet.Web</c>'s in-memory registry); swapping in a Firebase-backed
     /// implementation later means registering a different <see cref="IIdentityRegistry"/> in DI, nothing else.
     /// </summary>
+    /// <summary> Minimal public info about a registered identity, used for search results and viewing another user's profile. </summary>
+    public sealed record IdentitySummary(string PublicId, string DisplayName);
+
     public interface IIdentityRegistry
     {
         /// <summary> Registers a freshly generated identity's public keys and chosen display name. </summary>
         Task RegisterAsync(string publicId, byte[] signingPublicKey, byte[] encryptionPublicKey, string displayName);
+
+        /// <summary> Looks up the display name and public id for a registered identity, or null if unregistered. </summary>
+        Task<IdentitySummary?> GetSummaryAsync(string publicId);
+
+        /// <summary> Finds registered identities whose public id or display name starts with <paramref name="query"/>. </summary>
+        Task<IReadOnlyList<IdentitySummary>> SearchAsync(string query, int count);
 
         /// <summary> Looks up the ML-DSA signing public key for a registered identity, or null if unregistered. </summary>
         Task<byte[]?> GetSigningPublicKeyAsync(string publicId);

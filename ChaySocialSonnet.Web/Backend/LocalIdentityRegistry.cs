@@ -33,6 +33,25 @@ namespace ChaySocialSonnet.Web.Backend
         public Task<byte[]?> GetEncryptionPublicKeyAsync(string publicId) =>
             Task.FromResult(identities.TryGetValue(publicId, out RegisteredIdentity? identity) ? identity.EncryptionPublicKey : null);
 
+        public Task<IdentitySummary?> GetSummaryAsync(string publicId)
+        {
+            IdentitySummary? summary = identities.TryGetValue(publicId, out RegisteredIdentity? identity)
+                ? new IdentitySummary(publicId, identity.DisplayName)
+                : null;
+            return Task.FromResult(summary);
+        }
+
+        public Task<IReadOnlyList<IdentitySummary>> SearchAsync(string query, int count)
+        {
+            IReadOnlyList<IdentitySummary> results = identities
+                .Where(pair => pair.Key.StartsWith(query, StringComparison.OrdinalIgnoreCase)
+                    || pair.Value.DisplayName.StartsWith(query, StringComparison.OrdinalIgnoreCase))
+                .Take(count)
+                .Select(pair => new IdentitySummary(pair.Key, pair.Value.DisplayName))
+                .ToList();
+            return Task.FromResult(results);
+        }
+
         public Task<string> IssueChallengeAsync(string publicId)
         {
             string nonce = Convert.ToBase64String(RandomNumberGenerator.GetBytes(ChallengeNonceLengthBytes));

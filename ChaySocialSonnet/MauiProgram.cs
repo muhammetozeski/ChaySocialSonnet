@@ -28,6 +28,9 @@ namespace ChaySocialSonnet
             builder.Services.AddSingleton<IdentityApiClient>();
             builder.Services.AddSingleton<PostApiClient>();
             builder.Services.AddSingleton<MessagesApiClient>();
+            builder.Services.AddSingleton<FollowApiClient>();
+            builder.Services.AddSingleton<NotificationsApiClient>();
+            builder.Services.AddSingleton<SafetyApiClient>();
 
             // ChaySocialSonnet.MainProject.UI.Architecture.HostRenderMode.Interactive is intentionally
             // left null here: BlazorWebView always runs interactively in-process and throws if a

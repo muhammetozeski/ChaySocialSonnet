@@ -1,9 +1,57 @@
 @namespace ChaySocialSonnet.MainProject.UI.Elements.Cards
+@inject PostApiClient PostApi
+@inject SafetyApiClient SafetyApi
 
 <GlassCard CustomClass="post-card">
-    <p class="post-card-author">@ShortAuthorId</p>
+    <div class="post-card-header">
+        <p class="post-card-author">@ShortAuthorId</p>
+        <div class="post-card-header-actions">
+            @if (CanDelete)
+            {
+                <IconButton OnClick="HandleDelete"><span>🗑️</span></IconButton>
+            }
+            else if (ViewerPublicId is not null)
+            {
+                <IconButton OnClick="HandleReport"><span>🚩</span></IconButton>
+            }
+        </div>
+    </div>
     <p class="post-card-text">@Post.Text</p>
     <p class="post-card-time">@RelativeTimeFormatter.Format(Post.CreatedAt, DateTimeOffset.UtcNow)</p>
+
+    <div class="post-card-actions">
+        <button class="post-card-action @(_liked ? "post-card-action--active" : "")" disabled="@(ViewerPublicId is null)" @onclick="HandleToggleLike">
+            <span>@(_liked ? "❤️" : "🤍")</span><span>@_likeCount</span>
+        </button>
+        <button class="post-card-action" @onclick="HandleToggleComments">
+            <span>💬</span><span>@_commentCount</span>
+        </button>
+    </div>
+
+    @if (_reportSent)
+    {
+        <p class="post-card-report-sent">Report sent — thank you.</p>
+    }
+
+    @if (_showComments)
+    {
+        <div class="post-card-comments">
+            @foreach (CommentResponse comment in _comments)
+            {
+                <div class="post-card-comment">
+                    <span class="post-card-comment-author">@comment.AuthorPublicId[..Math.Min(ShortAuthorIdLength, comment.AuthorPublicId.Length)]</span>
+                    <span class="post-card-comment-text">@comment.Text</span>
+                </div>
+            }
+            @if (ViewerPublicId is not null)
+            {
+                <div class="post-card-comment-composer">
+                    <CoreInput Placeholder="Write a comment…" @bind-Value="_newCommentText" />
+                    <IconButton OnClick="HandleAddComment"><span>➤</span></IconButton>
+                </div>
+            }
+        </div>
+    }
 </GlassCard>
 
 <PostCardCss />
@@ -11,7 +59,81 @@
 @code {
     const int ShortAuthorIdLength = 8;
 
-    [Parameter, EditorRequired] public PublicPost Post { get; set; } = default!;
+    [Parameter, EditorRequired] public PostSummary Post { get; set; } = default!;
+    [Parameter] public string? ViewerPublicId { get; set; }
+    [Parameter] public EventCallback<string> OnDeleted { get; set; }
 
+    bool _liked;
+    int _likeCount;
+    int _commentCount;
+    bool _showComments;
+    bool _reportSent;
+    IReadOnlyList<CommentResponse> _comments = [];
+    string _newCommentText = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        _liked = Post.LikedByViewer;
+        _likeCount = Post.LikeCount;
+        _commentCount = Post.CommentCount;
+    }
+
+    bool CanDelete => ViewerPublicId is not null && ViewerPublicId == Post.AuthorPublicId;
     string ShortAuthorId => Post.AuthorPublicId[..Math.Min(ShortAuthorIdLength, Post.AuthorPublicId.Length)];
+
+    async Task HandleToggleLike()
+    {
+        if (ViewerPublicId is null)
+        {
+            return;
+        }
+
+        ToggleLikeResponse result = await PostApi.ToggleLikeAsync(Post.Id, ViewerPublicId);
+        _liked = result.Liked;
+        _likeCount = result.LikeCount;
+    }
+
+    async Task HandleToggleComments()
+    {
+        _showComments = !_showComments;
+        if (_showComments)
+        {
+            _comments = await PostApi.GetCommentsAsync(Post.Id);
+        }
+    }
+
+    async Task HandleAddComment()
+    {
+        if (ViewerPublicId is null || string.IsNullOrWhiteSpace(_newCommentText))
+        {
+            return;
+        }
+
+        CommentResponse comment = await PostApi.AddCommentAsync(Post.Id, ViewerPublicId, _newCommentText);
+        _comments = [.. _comments, comment];
+        _commentCount++;
+        _newCommentText = string.Empty;
+    }
+
+    async Task HandleDelete()
+    {
+        if (ViewerPublicId is null)
+        {
+            return;
+        }
+
+        await PostApi.DeletePostAsync(Post.Id, ViewerPublicId);
+        await OnDeleted.InvokeAsync(Post.Id);
+    }
+
+    async Task HandleReport()
+    {
+        if (ViewerPublicId is null)
+        {
+            return;
+        }
+
+        await SafetyApi.SubmitReportAsync(ViewerPublicId, "post", Post.Id, "Reported from the feed");
+        _reportSent = true;
+    }
 }
