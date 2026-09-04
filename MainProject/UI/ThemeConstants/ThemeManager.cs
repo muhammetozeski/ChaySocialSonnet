@@ -9,14 +9,14 @@ namespace ChaySocialSonnet.MainProject.Constants.ThemeConstants
         public static AppTheme Current { get; private set; } = AppThemes.PlayfulStarlight;
 
         /// <summary>
-        /// Replace the active palette. Fires <see cref="Events.MainEvents.OnDataChanged"/> which the
+        /// Replace the active palette. Raises <see cref="Events.MainEvents.OnThemeChanged"/> which the
         /// root layout subscribes to so the entire component tree re-renders against the new theme.
         /// </summary>
         public static void Apply(AppTheme theme)
         {
             if (theme == Current) return;
             Current = theme;
-            Events.MainEvents.Trigger("OnThemeChanged");
+            Events.MainEvents.OnThemeChanged.Raise();
         }
     }
 }

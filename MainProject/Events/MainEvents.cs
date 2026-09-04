@@ -1,12 +1,10 @@
 namespace ChaySocialSonnet.MainProject.Events
 {
+    /// <summary>
+    /// Central hub for app-wide notifications that do not belong to a single service.
+    /// </summary>
     public static class MainEvents
     {
-        public static event Action<string, object?>? OnDataChanged;
-
-        public static void Trigger(string eventName, object? data = null)
-        {
-            OnDataChanged?.Invoke(eventName, data);
-        }
+        public static readonly AppEvent OnThemeChanged = new();
     }
 }

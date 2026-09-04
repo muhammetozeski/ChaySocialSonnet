@@ -22,25 +22,22 @@
 
     protected override void OnInitialized()
     {
-        
+
         NavManager.LocationChanged += HandleLocationChanged;
-        Events.MainEvents.OnDataChanged += HandleDataChanged;
+        Events.MainEvents.OnThemeChanged.Subscribe(HandleThemeChanged);
         EvaluateBottomNavVisibility(NavManager.Uri);
     }
 
     private void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        
+
         EvaluateBottomNavVisibility(e.Location);
         StateHasChanged();
     }
 
-    private void HandleDataChanged(string eventName, object? data)
+    private void HandleThemeChanged()
     {
-        if (eventName == "OnThemeChanged")
-        {
-            InvokeAsync(StateHasChanged);
-        }
+        InvokeAsync(StateHasChanged);
     }
 
     private void EvaluateBottomNavVisibility(string uri)
@@ -51,6 +48,6 @@
     public void Dispose()
     {
         NavManager.LocationChanged -= HandleLocationChanged;
-        Events.MainEvents.OnDataChanged -= HandleDataChanged;
+        Events.MainEvents.OnThemeChanged.Unsubscribe(HandleThemeChanged);
     }
 }
