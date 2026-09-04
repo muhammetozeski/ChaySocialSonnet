@@ -1,0 +1,19 @@
+@attribute [Route("/")]
+@inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+<PageTitle>@AppConstants.AppNameHumanReadable</PageTitle>
+
+<div class="splash-screen">
+    <span class="splash-logo">🍵</span>
+    <CoreSpinner />
+    <p class="splash-tagline">@AppConstants.AppTagline</p>
+</div>
+
+<SplashCss />
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(UiConstants.Delays.SplashMinimumMs);
+        NavManager.NavigateTo("/login");
+    }
+}

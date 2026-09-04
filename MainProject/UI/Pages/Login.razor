@@ -1,0 +1,53 @@
+@attribute [Route("/login")]
+@inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+<PageTitle>@AppConstants.LoginMenuTitle</PageTitle>
+
+<div class="login-screen">
+    <GlassCard CustomClass="login-card">
+        <h1 class="login-title">@AppConstants.LoginMenuTitle</h1>
+        <p class="login-subtitle">@AppConstants.LoginMenuSubtitle</p>
+
+        @if (_identity is null)
+        {
+            <PrimaryButton IsFullWidth="true" Disabled="@_isCreating" OnClick="HandleCreateAccount">
+                @if (_isCreating)
+                {
+                    <CoreSpinner SizePx="@AppMeasures.Size.Px20" Color="@AppColors.TextOnAccent" />
+                }
+                else
+                {
+                    <span>Create my account</span>
+                }
+            </PrimaryButton>
+        }
+        else
+        {
+            <div class="login-identity-box">
+                <p class="login-identity-label">Your identity</p>
+                <p class="login-identity-value">@_identity.PublicId</p>
+            </div>
+            <PrimaryButton IsFullWidth="true" OnClick="HandleContinue">
+                <span>Continue</span>
+            </PrimaryButton>
+        }
+    </GlassCard>
+</div>
+
+<LoginCss />
+
+@code {
+    ChayIdentity? _identity;
+    bool _isCreating;
+
+    /// <summary> Generates a brand-new ML-DSA/ML-KEM identity entirely on this device; the private keys never leave it. </summary>
+    async Task HandleCreateAccount()
+    {
+        _isCreating = true;
+        StateHasChanged();
+        await Task.Yield();
+        _identity = IdentityService.GenerateIdentity();
+        _isCreating = false;
+    }
+
+    void HandleContinue() => NavManager.NavigateTo("/home");
+}

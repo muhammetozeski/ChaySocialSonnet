@@ -42,7 +42,8 @@
 
     private void EvaluateBottomNavVisibility(string uri)
     {
-        _showBottomNav = true;
+        var absolutePath = NavigationRouting.ToAbsoluteLowercasePath(NavManager, uri);
+        _showBottomNav = NavigationRouting.IsBottomNavigationRoute(absolutePath);
     }
 
     public void Dispose()

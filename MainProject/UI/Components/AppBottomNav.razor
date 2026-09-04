@@ -37,10 +37,9 @@
 
     private void UpdateActivePath(string uri)
     {
-        // Normalize to an absolute path like "/home" so NavItem.Path (a full route from NavigationConstants) matches directly.
-        var absolutePath = "/" + NavManager.ToBaseRelativePath(uri).ToLowerInvariant();
+        var absolutePath = NavigationRouting.ToAbsoluteLowercasePath(NavManager, uri);
         // Hidden pages (splash, login, paywall, etc.) won't match any tab and fall back to string.Empty.
-        _activePath = NavigationConstants.BottomNavigationItems.FirstOrDefault(item => absolutePath.StartsWith(item.Link)).Link ?? string.Empty;
+        _activePath = NavigationConstants.BottomNavigationItems.FirstOrDefault(item => absolutePath.StartsWith(item.Link.ToLowerInvariant())).Link ?? string.Empty;
     }
 
     public void Dispose()

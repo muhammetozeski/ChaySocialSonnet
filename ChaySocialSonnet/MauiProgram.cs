@@ -16,6 +16,9 @@ namespace ChaySocialSonnet
 
             builder.Services.AddMauiBlazorWebView();
 
+            // ChaySocialSonnet.MainProject.UI.Architecture.HostRenderMode.Interactive is intentionally
+            // left null here: BlazorWebView always runs interactively in-process and throws if a
+            // shared page specifies an explicit render mode.
 
             return builder.Build();
         }

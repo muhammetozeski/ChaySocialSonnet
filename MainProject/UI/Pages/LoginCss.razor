@@ -1,0 +1,55 @@
+@namespace ChaySocialSonnet.MainProject.UI.Pages
+<style>
+    .login-screen {
+        min-height: @(AppMeasures.Viewport.Full)vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: @(AppMeasures.Space.Large)px;
+    }
+
+    .login-card {
+        width: @(AppMeasures.Percent.Full)%;
+        max-width: @(AppMeasures.Size.Px420)px;
+        display: flex;
+        flex-direction: column;
+        gap: @(AppMeasures.Space.Medium)px;
+        text-align: center;
+    }
+
+    .login-title {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Hero)px;
+        font-weight: @(AppMeasures.Weight.Heavy);
+        color: @AppColors.TextPrimary;
+    }
+
+    .login-subtitle {
+        margin: 0 0 @(AppMeasures.Space.Small)px 0;
+        font-size: @(AppMeasures.Font.Normal)px;
+        color: @AppColors.TextSecondary;
+    }
+
+    .login-identity-box {
+        display: flex;
+        flex-direction: column;
+        gap: @(AppMeasures.Space.Px4)px;
+        padding: @(AppMeasures.Space.Medium)px;
+        border-radius: @(AppMeasures.Radius.Medium)px;
+        background: @(AppColors.SurfaceSubtle.ToRgbaHex(true));
+    }
+
+    .login-identity-label {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Small)px;
+        color: @AppColors.TextMuted;
+    }
+
+    .login-identity-value {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Medium)px;
+        font-weight: @(AppMeasures.Weight.Semibold);
+        color: @AppColors.TextPrimary;
+        word-break: break-all;
+    }
+</style>

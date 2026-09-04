@@ -1,6 +1,8 @@
 using ChaySocialSonnet.MainProject.Backend;
+using ChaySocialSonnet.MainProject.UI.Architecture;
 using ChaySocialSonnet.Web.Backend;
 using ChaySocialSonnet.Web.Components;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace ChaySocialSonnet
 {
@@ -8,6 +10,11 @@ namespace ChaySocialSonnet
     {
         public static void Main(string[] args)
         {
+            // Every page can touch a private key, so the whole app must always run client-side, even on
+            // the first request — Interactive Server/Auto would execute component code on this server
+            // process at least once. See HostRenderMode's own summary for the full reasoning.
+            HostRenderMode.Interactive = RenderMode.InteractiveWebAssembly;
+
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.

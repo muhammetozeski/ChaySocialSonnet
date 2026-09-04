@@ -361,5 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-# Claude Code local session state (not project source)
-.claude/
+
+# Claude Code local session/runtime state (launch.json and other config under .claude/ IS tracked)
+.claude/scheduled_tasks.lock
