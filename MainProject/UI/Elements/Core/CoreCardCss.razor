@@ -14,4 +14,9 @@
             .core-card.clickable:active {
                 transform: scale(@AppMeasures.Scale.CardPressed);
             }
+
+            .core-card.clickable:focus-visible {
+                outline: @(AppMeasures.Border.Medium)px solid @(AppColors.Primary.ToRgbaHex(true));
+                outline-offset: @(AppMeasures.Space.Px2)px;
+            }
 </style>

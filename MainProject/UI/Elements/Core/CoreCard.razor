@@ -1,4 +1,10 @@
-<div class="core-card @(OnClick.HasDelegate ? "clickable" : "") @CustomClass" style="@_computedStyle" @onclick="HandleClick">
+<div class="core-card @(OnClick.HasDelegate ? "clickable" : "") @CustomClass"
+     style="@_computedStyle"
+     role="@(OnClick.HasDelegate ? "button" : null)"
+     tabindex="@(OnClick.HasDelegate ? "0" : null)"
+     @onclick="HandleClick"
+     @onkeydown="HandleKeyDown"
+     @onkeydown:preventDefault="OnClick.HasDelegate">
     @ChildContent
 </div>
 
@@ -56,5 +62,14 @@
     void HandleClick()
     {
         if (OnClick.HasDelegate) OnClick.InvokeAsync();
+    }
+
+    /// <summary> Enter/Space activates a clickable card the same way a click does — otherwise a keyboard-only or screen-reader user has no way to activate it at all, since it's a div, not a real &lt;button&gt;. </summary>
+    void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (OnClick.HasDelegate && (args.Key == "Enter" || args.Key == " "))
+        {
+            HandleClick();
+        }
     }
 }
