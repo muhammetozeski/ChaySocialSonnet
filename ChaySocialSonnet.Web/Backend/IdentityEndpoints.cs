@@ -10,8 +10,14 @@ namespace ChaySocialSonnet.Web.Backend
         {
             app.MapPost("/api/identity/register", async (RegisterIdentityRequest request, IIdentityRegistry registry) =>
             {
-                byte[] signingPublicKey = Convert.FromBase64String(request.SigningPublicKeyBase64);
-                byte[] encryptionPublicKey = Convert.FromBase64String(request.EncryptionPublicKeyBase64);
+                if (!TryDecodeBase64(request.SigningPublicKeyBase64, out byte[] signingPublicKey))
+                {
+                    return Results.BadRequest("signingPublicKeyBase64 is not valid Base64.");
+                }
+                if (!TryDecodeBase64(request.EncryptionPublicKeyBase64, out byte[] encryptionPublicKey))
+                {
+                    return Results.BadRequest("encryptionPublicKeyBase64 is not valid Base64.");
+                }
 
                 if (IdentityService.DerivePublicId(signingPublicKey) != request.PublicId)
                 {
@@ -36,7 +42,11 @@ namespace ChaySocialSonnet.Web.Backend
 
             app.MapPost("/api/identity/verify", async (VerifyChallengeRequest request, IIdentityRegistry registry) =>
             {
-                byte[] signature = Convert.FromBase64String(request.SignatureBase64);
+                if (!TryDecodeBase64(request.SignatureBase64, out byte[] signature))
+                {
+                    return Results.BadRequest("signatureBase64 is not valid Base64.");
+                }
+
                 bool success = await registry.VerifyChallengeAsync(request.PublicId, request.Challenge, signature);
                 return Results.Ok(new VerifyChallengeResponse(success));
             });
@@ -55,6 +65,21 @@ namespace ChaySocialSonnet.Web.Backend
                 byte[]? key = await registry.GetEncryptionPublicKeyAsync(publicId);
                 return key is null ? Results.NotFound() : Results.Ok(Convert.ToBase64String(key));
             });
+        }
+
+        /// <summary> These three endpoints are pre-authentication — a malformed key/signature must come back as a clean 400, not an unhandled <see cref="FormatException"/> that takes the request down. </summary>
+        static bool TryDecodeBase64(string base64, out byte[] decoded)
+        {
+            try
+            {
+                decoded = Convert.FromBase64String(base64);
+                return true;
+            }
+            catch (FormatException)
+            {
+                decoded = [];
+                return false;
+            }
         }
     }
 }
