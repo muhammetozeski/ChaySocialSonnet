@@ -1,0 +1,38 @@
+@namespace ChaySocialSonnet.MainProject.UI.Pages
+<style>
+    .profile-screen {
+        min-height: @(AppMeasures.Viewport.Full)vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: @(AppMeasures.Space.Large)px;
+    }
+
+    .profile-card {
+        width: @(AppMeasures.Percent.Full)%;
+        max-width: @(AppMeasures.Size.Px420)px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: @(AppMeasures.Space.Medium)px;
+        text-align: center;
+    }
+
+    .profile-avatar {
+        font-size: @(AppMeasures.Font.Giant)px;
+    }
+
+    .profile-name {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Title)px;
+        font-weight: @(AppMeasures.Weight.Heavy);
+        color: @AppColors.TextPrimary;
+    }
+
+    .profile-identity {
+        margin: 0 0 @(AppMeasures.Space.Small)px 0;
+        font-size: @(AppMeasures.Font.Small)px;
+        color: @AppColors.TextMuted;
+        word-break: break-all;
+    }
+</style>

@@ -1,0 +1,29 @@
+@attribute [Route("/profile")]
+@inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+<PageTitle>Profile</PageTitle>
+
+<div class="profile-screen">
+    <GlassCard CustomClass="profile-card">
+        <span class="profile-avatar">@AppConstants.Avatar.DefaultUser</span>
+        <h1 class="profile-name">@_displayName</h1>
+        <p class="profile-identity">@(AuthService.CurrentIdentity?.PublicId)</p>
+
+        <DangerButton IsFullWidth="true" OnClick="HandleSignOut">
+            <span>Sign out</span>
+        </DangerButton>
+    </GlassCard>
+</div>
+
+<ProfileCss />
+
+@code {
+    string _displayName => string.IsNullOrWhiteSpace(UserProfileService.LoggedUserProfileData?.DisplayName)
+        ? AppConstants.GuestDisplayName
+        : UserProfileService.LoggedUserProfileData!.DisplayName;
+
+    void HandleSignOut()
+    {
+        AuthService.SignOut();
+        NavManager.NavigateTo("/login");
+    }
+}

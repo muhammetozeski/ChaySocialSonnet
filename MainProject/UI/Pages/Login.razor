@@ -49,5 +49,9 @@
         _isCreating = false;
     }
 
-    void HandleContinue() => NavManager.NavigateTo("/home");
+    void HandleContinue()
+    {
+        AuthService.SignIn(_identity!);
+        NavManager.NavigateTo("/home");
+    }
 }
