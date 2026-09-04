@@ -98,7 +98,7 @@
         _showComments = !_showComments;
         if (_showComments)
         {
-            _comments = await PostApi.GetCommentsAsync(Post.Id);
+            _comments = await PostApi.GetCommentsAsync(Post.Id, ViewerPublicId);
         }
     }
 

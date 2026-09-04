@@ -46,9 +46,10 @@ namespace ChaySocialSonnet.MainProject.Services
             return (await response.Content.ReadFromJsonAsync<ToggleLikeResponse>())!;
         }
 
-        public async Task<IReadOnlyList<CommentResponse>> GetCommentsAsync(string postId)
+        public async Task<IReadOnlyList<CommentResponse>> GetCommentsAsync(string postId, string? viewerPublicId)
         {
-            List<CommentResponse>? comments = await httpClient.GetFromJsonAsync<List<CommentResponse>>($"/api/posts/{Uri.EscapeDataString(postId)}/comments");
+            string viewerQuery = viewerPublicId is null ? "" : $"?viewerPublicId={Uri.EscapeDataString(viewerPublicId)}";
+            List<CommentResponse>? comments = await httpClient.GetFromJsonAsync<List<CommentResponse>>($"/api/posts/{Uri.EscapeDataString(postId)}/comments{viewerQuery}");
             return comments ?? [];
         }
 

@@ -8,11 +8,17 @@ namespace ChaySocialSonnet.Web.Backend
     {
         public static void MapPostEndpoints(this IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/posts/recent", async (int count, string? viewerPublicId, IPostStore posts, ILikeStore likes, ICommentStore comments) =>
-                Results.Ok(await ToSummariesAsync(await posts.GetRecentPostsAsync(count), viewerPublicId, likes, comments)));
+            app.MapGet("/api/posts/recent", async (int count, string? viewerPublicId, IPostStore posts, ILikeStore likes, ICommentStore comments, IBlockStore blocks) =>
+            {
+                IReadOnlyList<PublicPost> visible = await FilterBlockedAsync(await posts.GetRecentPostsAsync(count), viewerPublicId, blocks);
+                return Results.Ok(await ToSummariesAsync(visible, viewerPublicId, likes, comments));
+            });
 
-            app.MapGet("/api/posts/by-author/{authorPublicId}", async (string authorPublicId, int count, string? viewerPublicId, IPostStore posts, ILikeStore likes, ICommentStore comments) =>
-                Results.Ok(await ToSummariesAsync(await posts.GetPostsByAuthorAsync(authorPublicId, count), viewerPublicId, likes, comments)));
+            app.MapGet("/api/posts/by-author/{authorPublicId}", async (string authorPublicId, int count, string? viewerPublicId, IPostStore posts, ILikeStore likes, ICommentStore comments, IBlockStore blocks) =>
+            {
+                IReadOnlyList<PublicPost> visible = await FilterBlockedAsync(await posts.GetPostsByAuthorAsync(authorPublicId, count), viewerPublicId, blocks);
+                return Results.Ok(await ToSummariesAsync(visible, viewerPublicId, likes, comments));
+            });
 
             app.MapPost("/api/posts", async (CreatePostRequest request, IPostStore posts) =>
             {
@@ -36,9 +42,23 @@ namespace ChaySocialSonnet.Web.Backend
                 return Results.Ok(new ToggleLikeResponse(liked, count));
             });
 
-            app.MapGet("/api/posts/{postId}/comments", async (string postId, ICommentStore comments) =>
+            app.MapGet("/api/posts/{postId}/comments", async (string postId, string? viewerPublicId, ICommentStore comments, IBlockStore blocks) =>
             {
                 IReadOnlyList<PostComment> postComments = await comments.GetCommentsAsync(postId);
+                if (viewerPublicId is not null)
+                {
+                    var visible = new List<PostComment>(postComments.Count);
+                    foreach (PostComment comment in postComments)
+                    {
+                        bool hidden = await blocks.IsBlockedAsync(viewerPublicId, comment.AuthorPublicId) || await blocks.IsBlockedAsync(comment.AuthorPublicId, viewerPublicId);
+                        if (!hidden)
+                        {
+                            visible.Add(comment);
+                        }
+                    }
+                    postComments = visible;
+                }
+
                 return Results.Ok(postComments.Select(comment => new CommentResponse(comment.Id, comment.AuthorPublicId, comment.Text, comment.CreatedAt)));
             });
 
@@ -57,6 +77,26 @@ namespace ChaySocialSonnet.Web.Backend
             {
                 await notifications.AddAsync(post.AuthorPublicId, actorPublicId, kind, postId);
             }
+        }
+
+        /// <summary> Drops posts where the viewer has blocked the author or the author has blocked the viewer, in either direction. A no-op for an anonymous (null) viewer. </summary>
+        static async Task<IReadOnlyList<PublicPost>> FilterBlockedAsync(IReadOnlyList<PublicPost> posts, string? viewerPublicId, IBlockStore blocks)
+        {
+            if (viewerPublicId is null)
+            {
+                return posts;
+            }
+
+            var visible = new List<PublicPost>(posts.Count);
+            foreach (PublicPost post in posts)
+            {
+                bool hidden = await blocks.IsBlockedAsync(viewerPublicId, post.AuthorPublicId) || await blocks.IsBlockedAsync(post.AuthorPublicId, viewerPublicId);
+                if (!hidden)
+                {
+                    visible.Add(post);
+                }
+            }
+            return visible;
         }
 
         static async Task<IEnumerable<PostSummary>> ToSummariesAsync(IReadOnlyList<PublicPost> posts, string? viewerPublicId, ILikeStore likes, ICommentStore comments)
