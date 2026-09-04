@@ -1,0 +1,18 @@
+@namespace ChaySocialSonnet.MainProject.UI.Panels
+
+<div class="hero-feed-panel">
+    @if (Hero is not null)
+    {
+        <div class="hero-feed-hero">@Hero</div>
+    }
+    @if (Intro is not null)
+    {
+        <div class="hero-feed-intro">@Intro</div>
+    }
+    @if (Feed is not null)
+    {
+        <div class="hero-feed-feed">@Feed</div>
+    }
+</div>
+
+<HeroFeedPanelCss />

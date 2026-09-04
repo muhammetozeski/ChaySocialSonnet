@@ -1,0 +1,31 @@
+@namespace ChaySocialSonnet.MainProject.UI.Elements.Cards
+<style>
+    .post-card {
+        display: flex;
+        flex-direction: column;
+        gap: @(AppMeasures.Space.Px4)px;
+        text-align: left;
+    }
+
+    .post-card-author {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Small)px;
+        font-weight: @(AppMeasures.Weight.Semibold);
+        color: @AppColors.TextSecondary;
+    }
+
+    .post-card-text {
+        margin: 0;
+        font-size: @(AppMeasures.Font.Normal)px;
+        color: @AppColors.TextPrimary;
+        line-height: @(AppMeasures.LineHeight.Snug);
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .post-card-time {
+        margin: 0;
+        font-size: @(AppMeasures.Font.XSmall)px;
+        color: @AppColors.TextMuted;
+    }
+</style>

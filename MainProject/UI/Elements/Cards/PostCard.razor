@@ -1,0 +1,17 @@
+@namespace ChaySocialSonnet.MainProject.UI.Elements.Cards
+
+<GlassCard CustomClass="post-card">
+    <p class="post-card-author">@ShortAuthorId</p>
+    <p class="post-card-text">@Post.Text</p>
+    <p class="post-card-time">@RelativeTimeFormatter.Format(Post.CreatedAt, DateTimeOffset.UtcNow)</p>
+</GlassCard>
+
+<PostCardCss />
+
+@code {
+    const int ShortAuthorIdLength = 8;
+
+    [Parameter, EditorRequired] public PublicPost Post { get; set; } = default!;
+
+    string ShortAuthorId => Post.AuthorPublicId[..Math.Min(ShortAuthorIdLength, Post.AuthorPublicId.Length)];
+}

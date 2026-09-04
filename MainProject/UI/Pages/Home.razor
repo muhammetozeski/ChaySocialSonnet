@@ -1,17 +1,48 @@
 @attribute [Route("/home")]
 @inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
+@inject PostApiClient PostApi
 <PageTitle>Home</PageTitle>
 
 <div class="home-screen">
-    <GradientCard CustomClass="home-hero">
-        <span class="home-hero-emoji">🍵✨</span>
-        <h1 class="home-hero-title">Welcome to @AppConstants.AppNameHumanReadable</h1>
-        <p class="home-hero-subtitle">So glad you're here — your feed will start filling up soon.</p>
-    </GradientCard>
+    <HeroFeedPanel>
+        <Hero>
+            <GradientCard CustomClass="home-hero">
+                <span class="home-hero-emoji">🍵✨</span>
+                <h1 class="home-hero-title">Welcome to @AppConstants.AppNameHumanReadable</h1>
+                <p class="home-hero-subtitle">So glad you're here — your feed will start filling up soon.</p>
+            </GradientCard>
+        </Hero>
+        <Feed>
+            @if (_posts is null)
+            {
+                <div class="home-feed-loading">
+                    <CoreSpinner />
+                </div>
+            }
+            else if (_posts.Count == 0)
+            {
+                <p class="home-empty-feed">No posts yet — be the first to share something!</p>
+            }
+            else
+            {
+                @foreach (PublicPost post in _posts)
+                {
+                    <PostCard Post="post" />
+                }
+            }
+        </Feed>
+    </HeroFeedPanel>
 </div>
 
 <HomeCss />
 
 @code {
+    const int RecentPostsCount = 20;
 
+    IReadOnlyList<PublicPost>? _posts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _posts = await PostApi.GetRecentPostsAsync(RecentPostsCount);
+    }
 }
