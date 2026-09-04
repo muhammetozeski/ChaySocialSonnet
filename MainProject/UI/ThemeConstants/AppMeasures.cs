@@ -226,6 +226,16 @@ namespace ChaySocialSonnet.MainProject.Constants.ThemeConstants
             public const string Slowest = "3";
         }
 
+        /// <summary> Press-state scale transforms (unitless multiplier for CSS <c>transform: scale()</c>). Strings so the decimal survives any OS culture, matching Opacity/Duration/LineHeight/Tracking. </summary>
+        public static class Scale
+        {
+            /// <summary> Button press shrink — a stronger squeeze since buttons are the primary tap target. </summary>
+            public const string ButtonPressed = "0.95";
+
+            /// <summary> Card press shrink — a subtler squeeze since cards are larger, less button-like tap targets. </summary>
+            public const string CardPressed = "0.98";
+        }
+
         /// <summary> The single throbber design every spinning loader reuses, so the whole app spins identically. </summary>
         public static class Spinner
         {
