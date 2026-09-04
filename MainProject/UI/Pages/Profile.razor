@@ -32,6 +32,12 @@
 @code {
     string? _copyFeedback;
 
+    protected override void OnInitialized()
+    {
+        RequireAuth = true;
+        base.OnInitialized();
+    }
+
     string _displayName => string.IsNullOrWhiteSpace(UserProfileService.LoggedUserProfileData?.DisplayName)
         ? AppConstants.GuestDisplayName
         : UserProfileService.LoggedUserProfileData!.DisplayName;

@@ -16,6 +16,11 @@ namespace ChaySocialSonnet.MainProject.UI.Layout.Architecture
         protected override void OnInitialized()
         {
             NavManager.LocationChanged += (s, e) => { HasNavigatedAway = true; };
+
+            if (RequireAuth && AuthService.CurrentIdentity is null)
+            {
+                NavManager.NavigateTo("/login");
+            }
         }
 
         protected void RecoverFromError()
