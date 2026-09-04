@@ -55,12 +55,16 @@
         align-items: center;
         gap: @(AppMeasures.Space.Small)px;
         width: @(AppMeasures.Percent.Full)%;
+        padding: @(AppMeasures.Space.Medium)px;
+        border-radius: @(AppMeasures.Radius.Medium)px;
+        background: @(AppColors.SurfaceSubtle.ToRgbaHex(true));
     }
 
     .profile-identity {
         margin: 0;
         flex: 1;
         min-width: 0;
+        font-family: ui-monospace, "Cascadia Code", "Roboto Mono", Consolas, monospace;
         font-size: @(AppMeasures.Font.Small)px;
         color: @(AppColors.TextMuted.ToRgbaHex(true));
         word-break: break-all;
