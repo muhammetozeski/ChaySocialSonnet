@@ -58,6 +58,7 @@ namespace ChaySocialSonnet
 
             app.MapIdentityEndpoints();
             app.MapPostEndpoints();
+            app.MapMessagesEndpoints();
 
             app.MapStaticAssets();
             app.MapRazorComponents<App>()
