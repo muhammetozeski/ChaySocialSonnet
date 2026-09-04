@@ -1,13 +1,25 @@
 @attribute [Route("/profile")]
 @inherits ChaySocialSonnet.MainProject.UI.Layout.Architecture.PageBase
 @inject IIdentityKeyStore KeyStore
+@inject IJSRuntime JsRuntime
+@using System.Globalization
 <PageTitle>Profile</PageTitle>
 
 <div class="profile-screen">
     <GlassCard CustomClass="profile-card">
         <span class="profile-avatar">@AppConstants.Avatar.DefaultUser</span>
         <h1 class="profile-name">@_displayName</h1>
-        <p class="profile-identity">@(AuthService.CurrentIdentity?.PublicId)</p>
+
+        <div class="profile-identity-row">
+            <p class="profile-identity">@(AuthService.CurrentIdentity?.PublicId)</p>
+            <IconButton OnClick="HandleCopyIdentity">
+                <span>📋</span>
+            </IconButton>
+        </div>
+        @if (_copyFeedback is not null)
+        {
+            <CoreChip Text="@_copyFeedback" />
+        }
 
         <DangerButton IsFullWidth="true" OnClick="HandleSignOut">
             <span>Sign out</span>
@@ -18,9 +30,36 @@
 <ProfileCss />
 
 @code {
+    string? _copyFeedback;
+
     string _displayName => string.IsNullOrWhiteSpace(UserProfileService.LoggedUserProfileData?.DisplayName)
         ? AppConstants.GuestDisplayName
         : UserProfileService.LoggedUserProfileData!.DisplayName;
+
+    /// <summary> Copies the identity to the clipboard via the browser's own clipboard API and briefly shows a "Copied!"/"Copy failed" chip. The clipboard call can legitimately be denied (no user-gesture context, blocked permission, non-secure context), so a failure here must not crash the page. </summary>
+    async Task HandleCopyIdentity()
+    {
+        if (AuthService.CurrentIdentity is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", AuthService.CurrentIdentity.PublicId);
+            _copyFeedback = "Copied!";
+        }
+        catch (JSException exception)
+        {
+            Log(exception, LogLevel.Warning);
+            _copyFeedback = "Couldn't copy — select the text instead";
+        }
+
+        StateHasChanged();
+        await Task.Delay(TimeSpan.FromSeconds(double.Parse(AppMeasures.Duration.Longer, CultureInfo.InvariantCulture)));
+        _copyFeedback = null;
+        StateHasChanged();
+    }
 
     async Task HandleSignOut()
     {

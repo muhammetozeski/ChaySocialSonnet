@@ -29,10 +29,20 @@
         color: @AppColors.TextPrimary;
     }
 
+    .profile-identity-row {
+        display: flex;
+        align-items: center;
+        gap: @(AppMeasures.Space.Small)px;
+        width: @(AppMeasures.Percent.Full)%;
+    }
+
     .profile-identity {
-        margin: 0 0 @(AppMeasures.Space.Small)px 0;
+        margin: 0;
+        flex: 1;
+        min-width: 0;
         font-size: @(AppMeasures.Font.Small)px;
         color: @AppColors.TextMuted;
         word-break: break-all;
+        text-align: left;
     }
 </style>
